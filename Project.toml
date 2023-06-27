@@ -1,0 +1,13 @@
+name = "BlankLocalizationCore"
+uuid = "dc39d501-6ffa-4c27-9708-7dc7e3b1a5c3"
+authors = ["Tamás Cserteg <cserteg.tamas@sztaki.hu>", "András Kovács <akovacs@sztaki.hu> and contributors"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
