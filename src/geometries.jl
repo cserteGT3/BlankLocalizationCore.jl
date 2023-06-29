@@ -94,6 +94,12 @@ struct FeatureDescriptor
     hasrough::Bool
 end
 
+getfeaturename(f::FeatureDescriptor) = f.name
+getpartzero(f::FeatureDescriptor) = f.partzero
+getpartzeroname(f::FeatureDescriptor) = getpartzeroname(getpartzero(f))
+hasmachined(f::FeatureDescriptor) = f.hasmachined
+hasrough(f::FeatureDescriptor) = f.hasrough
+
 function Base.show(io::IO, fd::FeatureDescriptor)
     print(io, fd.name, " in ", fd.partzero.name,
     fd.hasmachined ? "; machined, " : "; ! machined, ",
@@ -138,6 +144,12 @@ end
 
 GeometryStyle(::Type{PlaneLocalizationFeature{R,M}}) where {R,M} = GeometryStyle(R)
 
+getfeaturename(f::LocalizationFeature) = getfeaturename(f.fd)
+getpartzero(f::LocalizationFeature) = getpartzero(f.fd)
+getpartzeroname(f::LocalizationFeature) = getpartzeroname(f.fd)
+hasmachined(f::LocalizationFeature) = hasmachined(f.fd)
+hasrough(f::LocalizationFeature) = hasrough(f.fd)
+
 """
     OptimizationResult
 
@@ -152,7 +164,7 @@ function Base.show(io::IO, or::OptimizationResult)
     print(io, or.status, ", minimum allowance: ", or.minallowance)
 end
 
-emptyor() = OptimizationResult("not yet run", 0.0)
+emptyor() = OptimizationResult("empty", 0.0)
 
 struct Tolerance
     featurename1::String
@@ -212,3 +224,73 @@ end
 Print the positions of the part zeros of a `MultiOperationProblem`.
 """
 printpartzeropositions(mop::MultiOperationProblem) = printpartzeropositions(mop.partzeros)
+
+"""
+    setparameters!(mop::MultiOperationProblem, pardict)
+
+Set parameter dictionary of a `MultiOperationProblem` to `pardict`.
+"""
+function setparameters!(mop::MultiOperationProblem, pardict)
+    mop.parameters = pardict
+    return mop
+end
+
+"""
+    getfeaturebyname(mop::MultiOperationProblem, featurename)
+
+Get a hole or plane feature by its name.
+It is assumed that all features have distinct names.
+Return `nothing`, if no feature is found with `featurename`.
+"""
+function getfeaturebyname(mop::MultiOperationProblem, featurename)
+    function retbyname(array, name)
+        for f in array
+            if getfeaturename(f) == name
+                return f
+            end
+        end
+        return nothing
+    end
+
+    hole_ = retbyname(mop.holes, featurename)
+    isnothing(hole_) || return hole_
+    # return plane even if it is nothing
+    return retbyname(mop.planes, featurename)
+end
+
+"""
+    collectholesbypartzero(mop::MultiOperationProblem, partzeroname)
+
+Collect holes that are grouped to part zero called `partzeroname`.
+"""
+function getholesbypartzero(mop::MultiOperationProblem, partzeroname)
+    return filter(x->getpartzeroname(x) == partzeroname, mop.holes)
+end
+
+"""
+    collectmachinedholes(mop::MultiOperationProblem)
+
+Collect holes that have a machined state.
+"""
+collectmachinedholes(mop::MultiOperationProblem) = filter(hasmachined, mop.holes)
+
+"""
+    collectmachinedplanes(mop::MultiOperationProblem)
+
+Collect planes that have a machined state.
+"""
+collectmachinedplanes(mop::MultiOperationProblem) = filter(hasmachined, mop.planes)
+
+"""
+    collectroughholes(mop::MultiOperationProblem)
+
+Collect those holes, that have rough stage.
+"""
+collectroughholes(mop::MultiOperationProblem) = filter(hasrough, mop.holes)
+
+"""
+    collectroughplanes(mop::MultiOperationProblem)
+
+Collect those planes, that have rough stage.
+"""
+collectroughplanes(mop::MultiOperationProblem) = filter(hasrough, mop.planes)
