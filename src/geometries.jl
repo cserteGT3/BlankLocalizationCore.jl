@@ -31,7 +31,14 @@ struct IsFreeForm <: GeometryStyle end
 featurepoint(x::T) where {T} = featurepoint(GeometryStyle(T), x)
 featurepoint(::IsPrimitive, x) = x.p
 function featurepoint(::IsFreeForm, x)
-    error("featurepoint function is not defined for `IsFreeForm`` features")
+    error("Function `featurepoint` is not defined for `IsFreeForm`` features")
+end
+
+# radius is only defined for hole like features that are IsPrimitive
+featureradius(x::T) where {T<:AbstractHoleGeometry} = featureradius(GeometryStyle(T), x)
+featureradius(::IsPrimitive, x) = x.r
+function featureradius(::IsFreeForm, x)
+    error("Function `featureradius` is not defined for `IsFreeForm`` features")
 end
 
 """
@@ -149,6 +156,11 @@ getpartzero(f::LocalizationFeature) = getpartzero(f.fd)
 getpartzeroname(f::LocalizationFeature) = getpartzeroname(f.fd)
 hasmachined(f::LocalizationFeature) = hasmachined(f.fd)
 hasrough(f::LocalizationFeature) = hasrough(f.fd)
+
+getroughfeaturepoint(f::LocalizationFeature) = featurepoint(f.rough)
+getmachinedfeaturepoint(f::LocalizationFeature) = featurepoint(f.machined)
+getmachinedradius(f::LocalizationFeature) = featureradius(f.machined)
+getroughradius(f::LocalizationFeature) = featureradius(f.rough)
 
 """
     OptimizationResult

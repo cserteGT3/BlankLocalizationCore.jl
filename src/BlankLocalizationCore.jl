@@ -1,5 +1,8 @@
 module BlankLocalizationCore
 
+using JuMP
+using HomogeneousVectors: HV
+
 export  PartZero,
         printpartzeropositions
 
@@ -17,5 +20,6 @@ export  SimpleHole,
 
 include("partzeros.jl")
 include("geometries.jl")
+include("optimization.jl")
 
 end

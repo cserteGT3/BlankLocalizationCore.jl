@@ -24,6 +24,8 @@ If you use find this work useful, please cite the paper:
 
 ## Design goals
 
+_Note_: minimum required Julia version is 1.6 due to StaticArrays.jl dependency!
+
 This is a one on one implementation of the optimization model described in the above mentioned paper.
 As processing different types of measurement data (such as coordinate measurement machine, or a 3D scanner) requires different methods and techniqes, a well designed interface is available.
 The aim is to make it easy to adapt our methodology to any measurement types available.

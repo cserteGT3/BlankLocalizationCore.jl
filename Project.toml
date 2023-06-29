@@ -3,8 +3,15 @@ uuid = "dc39d501-6ffa-4c27-9708-7dc7e3b1a5c3"
 authors = ["Tamás Cserteg <cserteg.tamas@sztaki.hu>", "András Kovács <akovacs@sztaki.hu> and contributors"]
 version = "1.0.0-DEV"
 
+[deps]
+HomogeneousVectors = "5d3f8266-9186-4afd-be5f-84c55396a2a7"
+JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
 [compat]
 julia = "1.6"
+JuMP = "1.4"
+HomogeneousVectors = "0.1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
