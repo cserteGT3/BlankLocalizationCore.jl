@@ -155,9 +155,9 @@ end
 emptyor() = OptimizationResult("not yet run", 0.0)
 
 mutable struct MultiOperationProblem
-    const partzeros::Vector{PartZero}
-    const holes::Vector{HoleLocalizationFeature}
-    const planes::Vector{PlaneLocalizationFeature}
+    partzeros::Vector{PartZero}
+    holes::Vector{HoleLocalizationFeature}
+    planes::Vector{PlaneLocalizationFeature}
     parameters::Dict{String,Real}
     opresult::OptimizationResult
 end
