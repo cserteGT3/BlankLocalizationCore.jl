@@ -154,16 +154,28 @@ end
 
 emptyor() = OptimizationResult("not yet run", 0.0)
 
+struct Tolerance
+    featurename1::String
+    machinedorrough1::String
+    projection::Function
+    featurename2::String
+    machinedorrough2::String
+    nominalvalue::Float64
+    lowervalue::Float64
+    uppervalue::Float64
+end
+
 mutable struct MultiOperationProblem
     partzeros::Vector{PartZero}
     holes::Vector{HoleLocalizationFeature}
     planes::Vector{PlaneLocalizationFeature}
+    tolerances::Vector{Tolerance}
     parameters::Dict{String,Real}
     opresult::OptimizationResult
 end
 
-function MultiOperationProblem(partzeros, holes, planes, parameters)
-    return MultiOperationProblem(partzeros, holes, planes, parameters, emptyor())
+function MultiOperationProblem(partzeros, holes, planes, tolerances, parameters)
+    return MultiOperationProblem(partzeros, holes, planes, tolerances, parameters, emptyor())
 end
 
 function problemtype(mop::MultiOperationProblem)
@@ -184,12 +196,13 @@ function Base.show(io::IO, mop::MultiOperationProblem)
     nh = size(mop.holes, 1)
     np = size(mop.planes, 1)
     npz = size(mop.partzeros, 1)
-    #nts = size(mop.tolerances, 1)
+    nts = size(mop.tolerances, 1)
     sn = string(problemtype(mop))
-    print(io, sn,": ", nh," hole", nh > 1 ? "s, " : ", ",
-    np," plane", np > 1 ? "s, " : ", ",
+    print(io, sn,": ",
     npz," part zero", npz > 1 ? "s, " : ", ",
-    #nts," tolerance", nts > 1 ? "s" : "",
+    nh," hole", nh > 1 ? "s, " : ", ",
+    np," plane", np > 1 ? "s, " : ", ",
+    nts," tolerance", nts > 1 ? "s" : "",
     ", status: ", mop.opresult.status)
 end
 

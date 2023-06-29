@@ -11,6 +11,7 @@ export  SimpleHole,
         HoleLocalizationFeature,
         PlaneLocalizationFeature,
         OptimizationResult,
+        Tolerance,
         MultiOperationProblem
         
 
