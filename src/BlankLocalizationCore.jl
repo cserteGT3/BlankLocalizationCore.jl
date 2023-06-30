@@ -1,7 +1,7 @@
 module BlankLocalizationCore
 
 using JuMP
-using HomogeneousVectors: HV
+using Logging: @warn
 
 export  PartZero,
         printpartzeropositions
@@ -16,7 +16,10 @@ export  SimpleHole,
         OptimizationResult,
         Tolerance,
         MultiOperationProblem
-        
+
+export  createjumpmodel,
+        setjumpresult!,
+        optimizeproblem!
 
 include("partzeros.jl")
 include("geometries.jl")

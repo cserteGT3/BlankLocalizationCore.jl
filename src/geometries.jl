@@ -151,11 +151,11 @@ end
 
 GeometryStyle(::Type{PlaneLocalizationFeature{R,M}}) where {R,M} = GeometryStyle(R)
 
-getfeaturename(f::LocalizationFeature) = getfeaturename(f.fd)
-getpartzero(f::LocalizationFeature) = getpartzero(f.fd)
-getpartzeroname(f::LocalizationFeature) = getpartzeroname(f.fd)
-hasmachined(f::LocalizationFeature) = hasmachined(f.fd)
-hasrough(f::LocalizationFeature) = hasrough(f.fd)
+getfeaturename(f::LocalizationFeature) = getfeaturename(f.descriptor)
+getpartzero(f::LocalizationFeature) = getpartzero(f.descriptor)
+getpartzeroname(f::LocalizationFeature) = getpartzeroname(f.descriptor)
+hasmachined(f::LocalizationFeature) = hasmachined(f.descriptor)
+hasrough(f::LocalizationFeature) = hasrough(f.descriptor)
 
 getroughfeaturepoint(f::LocalizationFeature) = featurepoint(f.rough)
 getmachinedfeaturepoint(f::LocalizationFeature) = featurepoint(f.machined)
@@ -180,10 +180,10 @@ emptyor() = OptimizationResult("empty", 0.0)
 
 struct Tolerance
     featurename1::String
-    machinedorrough1::String
+    ismachined1::Bool
     projection::Function
     featurename2::String
-    machinedorrough2::String
+    ismachined2::Bool
     nominalvalue::Float64
     lowervalue::Float64
     uppervalue::Float64
