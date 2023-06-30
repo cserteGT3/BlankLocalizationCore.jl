@@ -162,6 +162,15 @@ getmachinedfeaturepoint(f::LocalizationFeature) = featurepoint(f.machined)
 getmachinedradius(f::LocalizationFeature) = featureradius(f.machined)
 getroughradius(f::LocalizationFeature) = featureradius(f.rough)
 
+function getmachinedfeaturepointindatum(f::LocalizationFeature)
+    @assert hasmachined(f)
+    v = getmachinedfeaturepoint(f)
+    pz = getpartzero(f)
+    T = getpartzeroHM(pz)
+    v_indatum = T*HV(v)
+    return v_indatum[1:3]
+end
+
 """
     OptimizationResult
 
@@ -187,6 +196,7 @@ struct Tolerance
     nominalvalue::Float64
     lowervalue::Float64
     uppervalue::Float64
+    note::String
 end
 
 mutable struct MultiOperationProblem

@@ -1,6 +1,3 @@
-"""Create a homogeneous vector by appending 1 to the end of a vector."""
-HVJ(v) = vcat(v, 1)
-
 # dispatch on GeometryStyle trait
 function addhole2model!(model, hole::T, hindex, ipzmatricedict) where {T}
     return addhole2model!(GeometryStyle(T), model, hole, hindex, ipzmatricedict)
@@ -22,7 +19,7 @@ function addhole2model!(::IsPrimitive, model, hole, hindex, ipzmatricedict)
     r_machined = getmachinedradius(hole)
     r_rough = getroughradius(hole)
     # equation (4)
-    df_ = @expression(model, HVJ(v_machined)-ipzmatricedict[pzn]*HVJ(v_rough))
+    df_ = @expression(model, HV(v_machined)-ipzmatricedict[pzn]*HV(v_rough))
     @constraint(model, disth[hindex, 1:3] .== df_[1:3])
     # equation (5)
     @constraint(model, dxy[hindex]*dxy[hindex] >= disth[hindex, 1]*disth[hindex, 1]+disth[hindex, 2]*disth[hindex, 2])
@@ -49,7 +46,7 @@ function addplane2model!(::IsPrimitive, model, plane, pindex, ipzmatricedict)
     v_machined = getmachinedfeaturepoint(plane)
     v_rough = getroughfeaturepoint(plane)
     # equation (4)
-    df_ = @expression(model, HVJ(v_machined)-ipzmatricedict[pzn]*HVJ(v_rough))
+    df_ = @expression(model, HV(v_machined)-ipzmatricedict[pzn]*HV(v_rough))
     @constraint(model, distp[pindex, 1:3] .== df_[1:3])
     # equation (7)
     @constraint(model, -1*distp[pindex,3] >= minAllowance)
@@ -68,8 +65,8 @@ function addtolerances2model!(model, mop::MultiOperationProblem, pzmatricedict)
         pzn2 = getpartzeroname(f2)
 
         # equation (2)
-        v1 = @expression(model, t.ismachined1 ? pzmatricedict[pzn1]*HVJ(getmachinedfeaturepoint(f1)) : getroughfeaturepoint(f1))
-        v2 = @expression(model, t.ismachined2 ? pzmatricedict[pzn2]*HVJ(getmachinedfeaturepoint(f2)) : getroughfeaturepoint(f2))
+        v1 = @expression(model, t.ismachined1 ? pzmatricedict[pzn1]*HV(getmachinedfeaturepoint(f1)) : getroughfeaturepoint(f1))
+        v2 = @expression(model, t.ismachined2 ? pzmatricedict[pzn2]*HV(getmachinedfeaturepoint(f2)) : getroughfeaturepoint(f2))
         e_t = @expression(model, v1[1:3]-v2[1:3])
         real_d = @expression(model, t.projection(e_t))
 
