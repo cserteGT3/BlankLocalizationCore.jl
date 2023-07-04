@@ -39,7 +39,7 @@ end
 
 function addplane2model!(::IsPrimitive, model, plane, pindex, ipzmatricedict)
     # access registered variables
-    distp = model[:disth]
+    distp = model[:distp]
     minAllowance = model[:minAllowance]
     
     pzn = getpartzeroname(plane)
