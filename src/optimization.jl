@@ -1,17 +1,18 @@
 # dispatch on GeometryStyle trait
-function addhole2model!(model, hole::T, hindex, ipzmatricedict) where {T}
-    return addhole2model!(GeometryStyle(T), model, hole, hindex, ipzmatricedict)
+function addhole2model!(model, hole::HoleLocalizationFeature{R,M}, ipzmatricedict) where {R,M}
+    return addhole2model!(GeometryStyle(R), model, hole, ipzmatricedict)
 end
 
-function addhole2model!(::IsFreeForm, model, hole, hindex, ipzmatricedict)
+function addhole2model!(::IsFreeForm, model, hole, ipzmatricedict)
     error("Not yet implemented for FreeForm geometries")
 end
 
-function addhole2model!(::IsPrimitive, model, hole, hindex, ipzmatricedict)
+function addhole2model!(::IsPrimitive, model, hole, ipzmatricedict)
     # access registered variables
-    disth = model[:disth]
-    dxy = model[:dxy]
     minAllowance = model[:minAllowance]
+
+    # register distance variable:
+    dxy = @variable(model, base_name = string("d_xy_", getfeaturename(hole)), lower_bound = 0.0)
 
     pzn = getpartzeroname(hole)
     v_machined = getmachinedfeaturepoint(hole)
@@ -19,37 +20,38 @@ function addhole2model!(::IsPrimitive, model, hole, hindex, ipzmatricedict)
     r_machined = getmachinedradius(hole)
     r_rough = getroughradius(hole)
     # equation (4)
-    df_ = @expression(model, HV(v_machined)-ipzmatricedict[pzn]*HV(v_rough))
-    @constraint(model, disth[hindex, 1:3] .== df_[1:3])
+    d_f = @expression(model, HV(v_machined)-ipzmatricedict[pzn]*HV(v_rough))
     # equation (5)
-    @constraint(model, dxy[hindex]*dxy[hindex] >= disth[hindex, 1]*disth[hindex, 1]+disth[hindex, 2]*disth[hindex, 2])
+    @constraint(model, dxy*dxy >= d_f[1]*d_f[1] + d_f[2]*d_f[2])
     # equation (6)
-    @constraint(model, r_machined - r_rough - dxy[hindex] >= minAllowance)
+    @constraint(model, r_machined - r_rough - dxy >= minAllowance)
     return model
 end
 
 # dispatch on GeometryStyle trait
-function addplane2model!(model, plane::T, pindex, ipzmatricedict) where {T}
-    return addplane2model!(GeometryStyle(T), model, plane, pindex, ipzmatricedict)
+function addplane2model!(model, plane::PlaneLocalizationFeature{R,M}, ipzmatricedict) where {R,M}
+    return addplane2model!(GeometryStyle(R), model, plane, ipzmatricedict)
 end
 
-function addplane2model!(::IsFreeForm, model, plane, pindex, ipzmatricedict)
+function addplane2model!(::IsFreeForm, model, plane, ipzmatricedict)
     error("Not yet implemented for FreeForm geometries")
 end
 
-function addplane2model!(::IsPrimitive, model, plane, pindex, ipzmatricedict)
+function addplane2model!(::IsPrimitive, model, plane, ipzmatricedict)
     # access registered variables
-    distp = model[:distp]
     minAllowance = model[:minAllowance]
+
+    # register distance variable:
+    dz = @variable(model, base_name = string("d_z_", getfeaturename(plane)))
     
     pzn = getpartzeroname(plane)
     v_machined = getmachinedfeaturepoint(plane)
     v_rough = getroughfeaturepoint(plane)
     # equation (4)
-    df_ = @expression(model, HV(v_machined)-ipzmatricedict[pzn]*HV(v_rough))
-    @constraint(model, distp[pindex, 1:3] .== df_[1:3])
+    d_f = @expression(model, HV(v_machined)-ipzmatricedict[pzn]*HV(v_rough))
+    @constraint(model, dz == d_f[3])
     # equation (7)
-    @constraint(model, -1*distp[pindex,3] >= minAllowance)
+    @constraint(model, -1*dz >= minAllowance)
     return model
 end
 
@@ -84,7 +86,7 @@ function addtolerances2model!(model, mop::MultiOperationProblem, pzmatricedict)
     return model
 end
 
-function createjumpmodel(mop::MultiOperationProblem, optimizer)
+function createjumpmodel(mop::MultiOperationProblem, optimizer; disable_string_names=false)
     # create part zero variables
     "create invert partzero from jump variable"
     function makeipz(partzero, postr)
@@ -94,6 +96,9 @@ function createjumpmodel(mop::MultiOperationProblem, optimizer)
     end
 
     model = Model(optimizer)
+    if disable_string_names
+        set_string_names_on_creation(model, false)
+    end
 
     partzeros = mop.partzeros
     pzr = 1:length(partzeros)
@@ -107,17 +112,11 @@ function createjumpmodel(mop::MultiOperationProblem, optimizer)
 
     # holes that have machined state
     machinedholes = collectmachinedholes(mop)
-    nholes = length(machinedholes)
     # planes that have machined state
     machinedplanes = collectmachinedplanes(mop)
-    nplanes = length(machinedplanes)
     # numer of tolerances
     ntolerances = length(mop.tolerances)
-
-    # variables: distance vectors
-    @variable(model, disth[1:nholes, 1:3])
-    @variable(model, distp[1:nplanes, 1:3])
-    @variable(model, dxy[1:nholes] >= 0)
+    
     # variable for absolute valued relative error for each tolerance
     @variable(model, AbsValRelError[1:ntolerances])
     # variable for minimum allowance
@@ -127,12 +126,12 @@ function createjumpmodel(mop::MultiOperationProblem, optimizer)
     addtolerances2model!(model, mop, pzmatricedict)
 
     # allowance for holes
-    for (i, h) in enumerate(machinedholes)
-        addhole2model!(model, h, i, ipzmatricedict)
+    for h in machinedholes
+        addhole2model!(model, h, ipzmatricedict)
     end
     # allowance for planes
-    for (i, p) in enumerate(machinedplanes)
-        addplane2model!(model, p, i, ipzmatricedict)
+    for p in machinedplanes
+        addplane2model!(model, p, ipzmatricedict)
     end
 
     # optimization
