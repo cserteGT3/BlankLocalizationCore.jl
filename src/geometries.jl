@@ -26,12 +26,27 @@ struct IsFreeForm <: GeometryStyle end
 #GeometryStyle(::Type) = IsPrimitive()
 
 # Functions to be implemented to comply with the interface:
-# radius(HoleGeometry) - return the radius of a hole feature
 # primitive features have feature points
 featurepoint(x::T) where {T} = featurepoint(GeometryStyle(T), x)
 featurepoint(::IsPrimitive, x) = x.p
 function featurepoint(::IsFreeForm, x)
     error("Function `featurepoint` is not defined for `IsFreeForm`` features")
+end
+
+# Functions to be implemented to comply with the interface:
+# free form geometries have surfacepoints
+# return all points of a free form surface
+surfacepoints(x::T) where {T} = surfacepoints(GeometryStyle(T), x)
+#surfacepoints(::IsFreeForm, x) = x.p
+function surfacepoints(::IsPrimitive, x)
+    error("Function `surfacepoints` is not defined for `IsFreeForm`` features")
+end
+
+# free form geometries have surfacepoints
+# return only those points, that may define active constraints
+filteredsurfacepoints(x::T) where {T} = filteredsurfacepoints(GeometryStyle(T), x)
+function filteredsurfacepoints(::IsPrimitive, x)
+    error("Function `surfacepoints` is not defined for `IsPrimitive`` features")
 end
 
 # radius is only defined for hole like features that are IsPrimitive
@@ -73,11 +88,15 @@ A simple mesh hole geometry, that contains the mesh of the hole's surface and th
 hull of the points (see our paper for details).
 """
 struct MeshHole <: AbstractHoleGeometry
-    mesh
-    chull
+    surface::SimpleMesh
+    convexhull::Vector{Vector{Float64}}
 end
 
 GeometryStyle(::Type{MeshHole}) = IsFreeForm()
+
+function filteredsurfacepoints(::IsFreeForm, x::MeshHole)
+    return x.convexhull
+end
 
 """
 MeshPlane <: AbstractPlaneGeometry
@@ -85,7 +104,12 @@ MeshPlane <: AbstractPlaneGeometry
 A simple mesh plane geometry, that contains the mesh of a planar face.
 """
 struct MeshPlane <: AbstractPlaneGeometry
-    mesh
+    surface::SimpleMesh
+end
+
+function filteredsurfacepoints(::IsFreeForm, x::MeshPlane)
+    bbox = boundingbox(x.surface)
+    return [bbox.min.coords, bbox.max.coords]
 end
 
 GeometryStyle(::Type{MeshPlane}) = IsFreeForm()
@@ -141,7 +165,7 @@ struct HoleLocalizationFeature{R<:AbstractHoleGeometry,M<:AbstractHoleGeometry} 
     machined::M
 end
 
-GeometryStyle(::Type{HoleLocalizationFeature{R,M}}) where {R,M} = GeometryStyle(R)
+#GeometryStyle(::Type{HoleLocalizationFeature{R,M}}) where {R,M} = GeometryStyle(R)
 
 struct PlaneLocalizationFeature{R<:AbstractPlaneGeometry,M<:AbstractPlaneGeometry} <: LocalizationFeature{R,M}
     descriptor::FeatureDescriptor
@@ -149,7 +173,7 @@ struct PlaneLocalizationFeature{R<:AbstractPlaneGeometry,M<:AbstractPlaneGeometr
     machined::M
 end
 
-GeometryStyle(::Type{PlaneLocalizationFeature{R,M}}) where {R,M} = GeometryStyle(R)
+#GeometryStyle(::Type{PlaneLocalizationFeature{R,M}}) where {R,M} = GeometryStyle(R)
 
 getfeaturename(f::LocalizationFeature) = getfeaturename(f.descriptor)
 getpartzero(f::LocalizationFeature) = getpartzero(f.descriptor)
@@ -161,6 +185,8 @@ getroughfeaturepoint(f::LocalizationFeature) = featurepoint(f.rough)
 getmachinedfeaturepoint(f::LocalizationFeature) = featurepoint(f.machined)
 getmachinedradius(f::LocalizationFeature) = featureradius(f.machined)
 getroughradius(f::LocalizationFeature) = featureradius(f.rough)
+
+getroughfilteredpoints(f::LocalizationFeature) = filteredsurfacepoints(f.rough)
 
 function getmachinedfeaturepointindatum(f::LocalizationFeature)
     @assert hasmachined(f)
@@ -215,11 +241,11 @@ end
 function problemtype(mop::MultiOperationProblem)
     # problem type is depending on the rough geometries: IsPrimitive or IsFreeForm
     # if there is at least one IsFreeForm rough geometry -> hybrid problem
-    holetypes = GeometryStyle.(typeof.(mop.holes))
+    holetypes = GeometryStyle.(typeof.(x.rough for x in mop.holes))
     for ht in holetypes
         ht === IsFreeForm() && return :HybridProblem
     end
-    planetypes = GeometryStyle.(typeof.(mop.planes))
+    planetypes = GeometryStyle.(typeof.(x.rough for x in mop.planes))
     for pt in planetypes
         pt === IsFreeForm() && return :HybridProblem
     end

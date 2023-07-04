@@ -3,6 +3,7 @@ module BlankLocalizationCore
 using JuMP
 using DataFrames: DataFrame, names, nrow
 using PrettyTables: pretty_table, ft_nonothing, tf_html_minimalist
+using Meshes: SimpleMesh, vertices, boundingbox
 using Logging: @warn
 using LinearAlgebra: norm
 using Printf: @sprintf
@@ -32,6 +33,9 @@ export  allowancetable,
 
 """Union type for `Float64` and `Nothing`."""
 const FON = Union{Nothing,Float64}
+
+"""A 3 long vector of `nothing`s."""
+const NOTHING3 = [nothing, nothing, nothing]
 
 """Create a homogeneous vector by appending 1 to the end of a vector."""
 HV(v) = vcat(v, 1)

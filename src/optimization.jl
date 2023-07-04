@@ -3,10 +3,6 @@ function addhole2model!(model, hole::HoleLocalizationFeature{R,M}, ipzmatricedic
     return addhole2model!(GeometryStyle(R), model, hole, ipzmatricedict)
 end
 
-function addhole2model!(::IsFreeForm, model, hole, ipzmatricedict)
-    error("Not yet implemented for FreeForm geometries")
-end
-
 function addhole2model!(::IsPrimitive, model, hole, ipzmatricedict)
     # access registered variables
     minAllowance = model[:minAllowance]
@@ -28,13 +24,34 @@ function addhole2model!(::IsPrimitive, model, hole, ipzmatricedict)
     return model
 end
 
+function addhole2model!(::IsFreeForm, model, hole, ipzmatricedict)
+    # access registered variables
+    minAllowance = model[:minAllowance]
+
+    # filtered surface points of a free form surface
+    qs = getroughfilteredpoints(hole)
+    qiter = 1:length(qs)
+
+    # register distance variable:
+    dxy = @variable(model, [qiter], base_name = string("d_xy_", getfeaturename(hole)), lower_bound = 0.0)
+
+    pzn = getpartzeroname(hole)
+    v_machined = getmachinedfeaturepoint(hole)
+    r_machined = getmachinedradius(hole)
+    # equation (4)
+    for (i, q) in enumerate(qs)
+        d_f = @expression(model, HV(v_machined)-ipzmatricedict[pzn]*HV(q))
+        # equation (5)
+        @constraint(model, dxy[i]*dxy[i] >= d_f[1]*d_f[1] + d_f[2]*d_f[2])
+        # equation (6)
+        @constraint(model, dxy[i] - r_machined >= minAllowance)
+    end
+    return model
+end
+
 # dispatch on GeometryStyle trait
 function addplane2model!(model, plane::PlaneLocalizationFeature{R,M}, ipzmatricedict) where {R,M}
     return addplane2model!(GeometryStyle(R), model, plane, ipzmatricedict)
-end
-
-function addplane2model!(::IsFreeForm, model, plane, ipzmatricedict)
-    error("Not yet implemented for FreeForm geometries")
 end
 
 function addplane2model!(::IsPrimitive, model, plane, ipzmatricedict)
@@ -52,6 +69,30 @@ function addplane2model!(::IsPrimitive, model, plane, ipzmatricedict)
     @constraint(model, dz == d_f[3])
     # equation (7)
     @constraint(model, -1*dz >= minAllowance)
+    return model
+end
+
+function addplane2model!(::IsFreeForm, model, plane, ipzmatricedict)
+    # access registered variables
+    minAllowance = model[:minAllowance]
+
+    # filtered surface points of a free form surface
+    qs = getroughfilteredpoints(plane)
+    qiter = 1:length(qs)
+
+    # register distance variable:
+    dz = @variable(model, [qiter], base_name = string("d_z_", getfeaturename(plane)))
+
+    pzn = getpartzeroname(plane)
+    v_machined = getmachinedfeaturepoint(plane)
+    # equation (4)
+    for (i, q) in enumerate(qs)
+        d_f = @expression(model, HV(v_machined)-ipzmatricedict[pzn]*HV(q))
+        # equation (5)
+        @constraint(model, dz[i] == d_f[3])
+        # equation (6)
+        @constraint(model, -1*dz[i] >= minAllowance)
+    end
     return model
 end
 

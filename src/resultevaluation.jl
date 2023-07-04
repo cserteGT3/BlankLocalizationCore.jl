@@ -1,5 +1,3 @@
-const NOTHING3 = [nothing, nothing, nothing]
-
 function allowancetable(mop::MultiOperationProblem)
     df = DataFrame(name=String[], partzeroname=String[], machinedx=FON[], machinedy=FON[],
         machinedz=FON[], roughx=FON[], roughy=FON[], roughz=FON[], machinedr=FON[],
