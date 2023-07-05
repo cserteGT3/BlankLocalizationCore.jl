@@ -26,6 +26,33 @@ function computeallowance(::IsPrimitive, hole::HoleLocalizationFeature)
         xydistance = xydist, rallowance = rallowance)
 end
 
+function computeallowance(::IsFreeForm, hole::HoleLocalizationFeature)
+    # machined radius and machined feature point in datum
+    r_m = hasmachined(hole) ? getmachinedradius(hole) : nothing
+    v_m = hasmachined(hole) ? getmachinedfeaturepointindatum(hole) : NOTHING3
+
+    if hasmachined(hole) & hasrough(hole)
+        qs = getroughfilteredpoints(hole)
+        rallowances = zeros(Float64, size(qs))
+        
+        pz = getpartzero(hole)
+        T_inv = getpartzeroinverseHM(pz)
+        v_mlocal = getmachinedfeaturepoint(hole)
+        for (i, q) in enumerate(qs)
+            d_f = HV(v_mlocal) - T_inv*HV(q)
+            xydist = norm(d_f[1:2])
+            rallowances[i] = xydist - r_m
+        end
+        rallowance = sum(rallowances)/length(qs)
+    else
+        rallowance = nothing
+    end
+
+    # return: radii, v_m in datum, v_r in datum, xydistance, rallowance
+    return (roughradius = nothing, machinedradius = r_m, roughfp = NOTHING3,
+    machinedfp = v_m, xydistance = nothing, rallowance = rallowance)
+end
+
 function computeallowance(plane::PlaneLocalizationFeature{R,M}) where {R,M}
     return computeallowance(GeometryStyle(R), plane)
 end
@@ -49,6 +76,32 @@ function computeallowance(::IsPrimitive, plane::PlaneLocalizationFeature)
 
     # return: v_m in datum, v_r in datum, zdistance, axallowance
     return (roughfp = v_r, machinedfp = v_m, zdistance = zdist, axallowance = axallowance)
+end
+
+function computeallowance(::IsFreeForm, plane::PlaneLocalizationFeature)
+    # machined feature point in datum
+    v_m = hasmachined(plane) ? getmachinedfeaturepointindatum(plane) : NOTHING3
+
+    if hasmachined(plane) & hasrough(plane)
+        qs = getroughfilteredpoints(plane)
+        axallowances = zeros(Float64, size(qs))
+        
+        pz = getpartzero(plane)
+        T_inv = getpartzeroinverseHM(pz)
+        v_mlocal = getmachinedfeaturepoint(plane)
+        for (i, q) in enumerate(qs)
+            d_f = HV(v_mlocal) - T_inv*HV(q)
+            axallowances[i] = -1*d_f[3]
+        end
+        axallowance = sum(axallowances)/length(qs)
+    else
+        axallowance = nothing
+    end
+    zdist = nothing
+
+    # return: v_m in datum, v_r in datum, zdistance, axallowance
+    return (roughfp = NOTHING3, machinedfp = v_m,
+        zdistance = zdist, axallowance = axallowance)
 end
 
 function allowancetable(mop::MultiOperationProblem)
