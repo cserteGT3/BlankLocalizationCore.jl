@@ -1,3 +1,56 @@
+function computeallowance(hole::HoleLocalizationFeature{R,M}) where {R,M}
+    return computeallowance(GeometryStyle(R), hole)
+end
+
+function computeallowance(::IsPrimitive, hole::HoleLocalizationFeature)
+    # rough and machined radius, rough and machined feature point in datum
+    r_r = hasrough(hole) ? getroughradius(hole) : nothing
+    r_m = hasmachined(hole) ? getmachinedradius(hole) : nothing
+    v_r = hasrough(hole) ? getroughfeaturepoint(hole) : NOTHING3
+    v_m = hasmachined(hole) ? getmachinedfeaturepointindatum(hole) : NOTHING3
+
+    if hasmachined(hole) & hasrough(hole)
+        v_mlocal = getmachinedfeaturepoint(hole)
+        pz = getpartzero(hole)
+        T_inv = getpartzeroinverseHM(pz)
+        d_f = HV(v_mlocal) - T_inv*HV(v_r)
+        xydist = norm(d_f[1:2])
+        rallowance = r_m - r_r - xydist
+    else
+        xydist = nothing
+        rallowance = nothing
+    end
+
+    # return: radii, v_m in datum, v_r in datum, xydistance, rallowance
+    return (roughradius = r_r, machinedradius = r_m, roughfp = v_r, machinedfp = v_m,
+        xydistance = xydist, rallowance = rallowance)
+end
+
+function computeallowance(plane::PlaneLocalizationFeature{R,M}) where {R,M}
+    return computeallowance(GeometryStyle(R), plane)
+end
+
+function computeallowance(::IsPrimitive, plane::PlaneLocalizationFeature)
+    # rough and machined feature point in datum
+    v_r = hasrough(plane) ? getroughfeaturepoint(plane) : NOTHING3
+    v_m = hasmachined(plane) ? getmachinedfeaturepointindatum(plane) : NOTHING3
+
+    if hasmachined(plane) & hasrough(plane)
+        v_mlocal = getmachinedfeaturepoint(plane)
+        pz = getpartzero(plane)
+        T_inv = getpartzeroinverseHM(pz)
+        d_f = HV(v_mlocal) - T_inv*HV(v_r)
+        zdist = d_f[3]
+        axallowance = -1*zdist
+    else
+        zdist = nothing
+        axallowance = nothing
+    end
+
+    # return: v_m in datum, v_r in datum, zdistance, axallowance
+    return (roughfp = v_r, machinedfp = v_m, zdistance = zdist, axallowance = axallowance)
+end
+
 function allowancetable(mop::MultiOperationProblem)
     df = DataFrame(name=String[], partzeroname=String[], machinedx=FON[], machinedy=FON[],
         machinedz=FON[], roughx=FON[], roughy=FON[], roughz=FON[], machinedr=FON[],
@@ -5,56 +58,29 @@ function allowancetable(mop::MultiOperationProblem)
         axallowance=FON[])
     # holes
     for h in mop.holes
-        # rough radius and pose in datum
-        r_r = hasrough(h) ? getroughradius(h) : nothing
-        v_r = hasrough(h) ? getroughfeaturepoint(h) : NOTHING3
-        
-        # machined radius and pose in datum
-        if hasmachined(h)
-            r_m = hasmachined(h) ? getmachinedradius(h) : nothing
-            v_m = hasmachined(h) ? getmachinedfeaturepointindatum(h) : nothing
-            # partzero
-            pz = getpartzero(h)
-            T_inv = getpartzeroinverseHM(pz)
-            d_f = HV(v_m) - T_inv*HV(v_r)
-            xydist = norm(d_f[1:2])
-            zdist = d_f[3]
-            rallowance = r_m - r_r - xydist
-            zallowance = -zdist
-        else
-            r_m = nothing
-            v_m = NOTHING3
-            xydist = nothing
-            zdist = nothing
-            rallowance = nothing
-            zallowance = nothing
-        end
+        # return: radii, v_m in datum, v_r in datum, xydistance, rallowance
+        htuple = computeallowance(h)
+        v_m = htuple.machinedfp
+        v_r = htuple.roughfp
+        r_m = htuple.machinedradius
+        r_r = htuple.roughradius
+        xydist = htuple.xydistance
+        rallowance = htuple.rallowance
 
         push!(df, [getfeaturename(h), getpartzeroname(h), v_m[1], v_m[2], v_m[3], v_r[1],
-            v_r[2], v_r[3], r_m, r_r, xydist, zdist, rallowance, zallowance])
+            v_r[2], v_r[3], r_m, r_r, xydist, nothing, rallowance, nothing])
     end
     # planes
     for p in mop.planes
-        # rough radius and pose in datum
-        v_r = hasrough(p) ? getroughfeaturepoint(p) : NOTHING3
+        ptuple = computeallowance(p)
+        v_m = ptuple.machinedfp
+        v_r = ptuple.roughfp
+        zdist = ptuple.zdistance
+        axallowance = ptuple.axallowance
         
-        # machined radius and pose in datum
-        if hasmachined(p)
-            v_m = hasmachined(p) ? getmachinedfeaturepointindatum(p) : nothing
-            # partzero
-            pz = getpartzero(p)
-            T_inv = getpartzeroinverseHM(pz)
-            d_f = HV(v_m) - T_inv*HV(v_r)
-            zdist = d_f[3]
-            zallowance = -zdist
-        else
-            v_m = NOTHING3
-            zdist = nothing
-            zallowance = nothing
-        end
 
         push!(df, [getfeaturename(p), getpartzeroname(p), v_m[1], v_m[2], v_m[3], v_r[1],
-            v_r[2], v_r[3], nothing, nothing, nothing, zdist, nothing, zallowance])
+            v_r[2], v_r[3], nothing, nothing, nothing, zdist, nothing, axallowance])
     end
     return df
 end
