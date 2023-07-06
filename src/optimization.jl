@@ -44,7 +44,7 @@ function addhole2model!(::IsFreeForm, model, hole, ipzmatricedict)
         # equation (5)
         @constraint(model, dxy[i]*dxy[i] >= d_f[1]*d_f[1] + d_f[2]*d_f[2])
         # equation (6)
-        @constraint(model, dxy[i] - r_machined >= minAllowance)
+        @constraint(model, r_machined - dxy[i] >= minAllowance)
     end
     return model
 end

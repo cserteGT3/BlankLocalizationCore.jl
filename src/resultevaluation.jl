@@ -41,7 +41,7 @@ function computeallowance(::IsFreeForm, hole::HoleLocalizationFeature)
         for (i, q) in enumerate(qs)
             d_f = HV(v_mlocal) - T_inv*HV(q)
             xydist = norm(d_f[1:2])
-            rallowances[i] = xydist - r_m
+            rallowances[i] = r_m - xydist
         end
         rallowance = sum(rallowances)/length(qs)
     else
