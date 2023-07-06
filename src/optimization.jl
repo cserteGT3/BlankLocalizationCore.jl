@@ -161,7 +161,8 @@ function createjumpmodel(mop::MultiOperationProblem, optimizer; disable_string_n
     # variable for absolute valued relative error for each tolerance
     @variable(model, AbsValRelError[1:ntolerances])
     # variable for minimum allowance
-    @variable(model, minAllowance >= 0)
+    #@variable(model, minAllowance >= 0)
+    @variable(model, minAllowance)
 
     ## tolerances
     addtolerances2model!(model, mop, pzmatricedict)
