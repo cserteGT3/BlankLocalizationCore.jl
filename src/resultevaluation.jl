@@ -43,7 +43,7 @@ function computeallowance(::IsFreeForm, hole::HoleLocalizationFeature)
             xydist = norm(d_f[1:2])
             rallowances[i] = r_m - xydist
         end
-        rallowance = sum(rallowances)/length(qs)
+        rallowance = minimum(rallowances)
     else
         rallowance = nothing
     end
@@ -93,7 +93,7 @@ function computeallowance(::IsFreeForm, plane::PlaneLocalizationFeature)
             d_f = HV(v_mlocal) - T_inv*HV(q)
             axallowances[i] = -1*d_f[3]
         end
-        axallowance = sum(axallowances)/length(qs)
+        axallowance = minimum(axallowances)
     else
         axallowance = nothing
     end
