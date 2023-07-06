@@ -8,7 +8,8 @@ end
 
 Base.show(io::IO, pz::PartZero) = print(io, "Part zero: \"", pz.name, "\"")
 
-Base.show(io::IO, ::MIME"text/plain", pz::PartZero) = print(io, "Part zero: \"", pz.name, "\"\n", getpartzeroHM(pz))
+Base.show(io::IO, ::MIME"text/plain", pz::PartZero) = print(io, "Part zero: \"",
+    pz.name, "\"\n", getpartzeroHM(pz))
 
 xaxis(partzero::PartZero) = partzero.rotation[:,1]
 yaxis(partzero::PartZero) = partzero.rotation[:,2]
@@ -55,7 +56,6 @@ function inverthomtr(M)
     return invtr
 end
 
-
 """
     getpartzerobyname(partzeros::Vector{PartZero}, partzeroname::AbstractString)
 
@@ -66,22 +66,6 @@ function getpartzerobyname(partzeros::Vector{PartZero}, partzeroname::AbstractSt
         pz.name == partzeroname && return pz
     end
     return nothing
-end
-
-"""
-    getcoordinateindatumorientation(partzero::PartZero, v, axis::Int)
-
-Get the `axis`th coordinate of vector `v` in the orientation of the workpiece datum.
-(Inverse transformed with the part zero, the part zero's position being zero.)
-"""
-function getcoordinateindatumorientation(partzero::PartZero, v, axis::Int)
-    M = getpartzeroHM(partzero)
-    M[1:3,4] = [0,0,0]
-    #iM = inv(M)
-    fv = M*vcat(v, 1)
-    # not sure why, but part zero is needed, not its inverted part
-    #fv = iM*vcat(v, 1)
-    return fv[axis]
 end
 
 """
