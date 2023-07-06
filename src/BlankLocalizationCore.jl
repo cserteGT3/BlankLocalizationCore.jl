@@ -17,8 +17,9 @@ export  SimpleHole,
         MeshPlane,
         FeatureDescriptor,
         HoleLocalizationFeature,
-        PlaneLocalizationFeature,
-        OptimizationResult,
+        PlaneLocalizationFeature
+
+export  OptimizationResult,
         Tolerance,
         MultiOperationProblem
 
@@ -42,6 +43,7 @@ HV(v) = vcat(v, 1)
 
 include("partzeros.jl")
 include("geometries.jl")
+include("optimizationproblem.jl")
 include("optimization.jl")
 include("resultevaluation.jl")
 
