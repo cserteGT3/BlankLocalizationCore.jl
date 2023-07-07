@@ -5,7 +5,8 @@ using DataFrames: DataFrame, names, nrow
 using PrettyTables: pretty_table, ft_nonothing, tf_html_minimalist
 using Meshes: SimpleMesh, vertices, boundingbox
 using Logging: @warn
-using LinearAlgebra: norm
+using LinearAlgebra: norm, dot
+using Statistics: mean
 using Printf: @sprintf
 
 export  PartZero,
@@ -43,6 +44,7 @@ HV(v) = vcat(v, 1)
 
 include("partzeros.jl")
 include("geometries.jl")
+include("tolerances.jl")
 #include("optimizationproblem.jl")
 #include("optimization.jl")
 #include("resultevaluation.jl")
