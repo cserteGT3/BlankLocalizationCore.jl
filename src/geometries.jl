@@ -36,7 +36,7 @@ end
 # return all points of a free form surface
 surfacepoints(x::T) where {T} = surfacepoints(GeometryStyle(T), x)
 function surfacepoints(::IsPrimitive, x)
-    error("Function `surfacepoints` is not defined for `IsFreeForm`` features")
+    error("Function `surfacepoints` is not defined for `IsPrimitive`` features")
 end
 
 # free form geometries have surfacepoints
