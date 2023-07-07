@@ -19,6 +19,14 @@ export  SimpleHole,
         LocalizationFeature,
         HoleLocalizationFeature,
         PlaneLocalizationFeature
+
+export  PlanePlaneDistance,
+        PlaneAxisDistance,
+        AxisAxisDistance,
+        AxisAxisConcentric,
+        LocalizationTolerance,
+        toleranceddistance
+
 #=
 export  OptimizationResult,
         Tolerance,

@@ -1,6 +1,9 @@
 using BlankLocalizationCore
 using Test
+using Meshes
 
-@testset "BlankLocalizationCore.jl" begin
-    # Write your tests here.
+const BLC = BlankLocalizationCore
+
+@testset "BlankLocalizationCore.jl: Tolerances" begin
+    include("tolerances.jl")
 end
