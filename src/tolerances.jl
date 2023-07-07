@@ -53,19 +53,16 @@ function toleranceddistance(type::PlanePlaneDistance, f1, m1, f2, m2)
             Can't compute `PlanePlaneDistance`")
     end
 
-
-    # sokszor fog kelleni az, hogy v_feature = ismachined ? v_m : v_r
-    # 1. kelleni fog pont vagy pontok -> mindig pontlista vs pontlista legyen
-    # 2. kelleni fog, hogy kell-e
-    v_f1_ = getfeaturepoints(f1)
-    v_f2_ = getfeaturepoints(f2)
+    v_f1_ = m1 == MACHINED ? getfeaturepoints(f1.machined) : getfeaturepoints(f1.rough)
+    v_f2_ = m2 == MACHINED ? getfeaturepoints(f2.machined) : getfeaturepoints(f2.rough)
     v_f1 = m1 == MACHINED ? transformmachined2datum(f1, v_f1_) : v_f1_
     v_f2 = m2 == MACHINED ? transformmachined2datum(f2, v_f2_) : v_f2_
 
     # pairwise distance
-    distance_vectors = (v2-v1 for v1 in v_f1 for v2 in v_f2)
-    mean_vector = mean(distance_vectors)
-    d = abs(dot(mean_vector, zaxis1))
+    #TODO: not good for two IsFreeForm surfaces!!!!
+    difference_vectors = (v2-v1 for v1 in v_f1 for v2 in v_f2)
+    signed_distances = (dot(zaxis1, dv) for dv in difference_vectors)
+    d = mean(abs.(signed_distances))
     return d
 end
 
@@ -86,5 +83,5 @@ end
 
 
 function toleranceddistance(t::LocalizationTolerance)
-    toleranceddistance(t.tolerancetype, t.feature1, t.machined1, t.feature2, t.machined2)
+    toleranceddistance(t.type, t.feature1, t.machined1, t.feature2, t.machined2)
 end

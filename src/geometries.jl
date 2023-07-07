@@ -91,6 +91,12 @@ end
 
 GeometryStyle(::Type{MeshHole}) = IsFreeForm()
 
+function surfacepoints(::IsFreeForm, x::MeshHole)
+    points = vertices(x.surface)
+    verts = [x.coords for x in points]
+    return verts
+end
+
 function filteredsurfacepoints(::IsFreeForm, x::MeshHole)
     return x.convexhull
 end
@@ -104,12 +110,19 @@ struct MeshPlane <: AbstractPlaneGeometry
     surface::SimpleMesh
 end
 
+GeometryStyle(::Type{MeshPlane}) = IsFreeForm()
+
+function surfacepoints(::IsFreeForm, x::MeshPlane)
+    points = vertices(x.surface)
+    verts = [x.coords for x in points]
+    return verts
+end
+
 function filteredsurfacepoints(::IsFreeForm, x::MeshPlane)
     bbox = boundingbox(x.surface)
     return [bbox.min.coords, bbox.max.coords]
 end
 
-GeometryStyle(::Type{MeshPlane}) = IsFreeForm()
 
 """
     LocalizationFeature{R,M}
@@ -143,7 +156,7 @@ function Base.show(io::IO, lf::LocalizationFeature)
 end
 
 getfeaturename(f::LocalizationFeature) = f.name
-getpartzero(f::LocalizationFeature) = getpartzero(f.partzero)
+getpartzero(f::LocalizationFeature) = f.partzero
 getpartzeroname(f::LocalizationFeature) = getpartzeroname(f.partzero)
 
 getroughfeaturepoint(f::LocalizationFeature) = featurepoint(f.rough)
