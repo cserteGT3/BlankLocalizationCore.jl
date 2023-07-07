@@ -1,4 +1,4 @@
-"""Supertype for localization geometries."""
+"""Supertype of localization geometries."""
 abstract type AbstractLocalizationGeometry end
 
 """Supertype of hole like localization geometries."""
@@ -7,18 +7,16 @@ abstract type AbstractHoleGeometry <: AbstractLocalizationGeometry end
 """Supertype of plane like geometries."""
 abstract type AbstractPlaneGeometry <: AbstractLocalizationGeometry end
 
-
-# Traits that all features need to have:
-# rough OR machined -> this can be eliminated by having two fields: rough and machined
-# primitive OR freeform
-# hole OR plane: trait/abstract type/type parameter???
-
-
-"""Trait that describes the "style" of an [`AbstractLocalizationGeometry`](@ref)."""
+"""
+Trait that describes the "style" of an [`AbstractLocalizationGeometry`](@ref).
+If it can be described by a primitive, then it is [`IsPrimitive`](@ref) and
+[`IsFreeForm`](@ref) otherwise.
+"""
 abstract type GeometryStyle end
 
 """Primitive geometries can be explicitly described, e.g. a box or sphere."""
 struct IsPrimitive <: GeometryStyle end
+
 """Free form geometries are discrete representations, e.g. a mesh or a point cloud."""
 struct IsFreeForm <: GeometryStyle end
 
@@ -37,7 +35,6 @@ end
 # free form geometries have surfacepoints
 # return all points of a free form surface
 surfacepoints(x::T) where {T} = surfacepoints(GeometryStyle(T), x)
-#surfacepoints(::IsFreeForm, x) = x.p
 function surfacepoints(::IsPrimitive, x)
     error("Function `surfacepoints` is not defined for `IsFreeForm`` features")
 end
@@ -115,71 +112,39 @@ end
 GeometryStyle(::Type{MeshPlane}) = IsFreeForm()
 
 """
-Store description of a feature: its name, the corresponding part zero, if it has or has not
-a machined and a rough state.
-"""
-struct FeatureDescriptor
-    name::String
-    partzero::PartZero
-    hasmachined::Bool
-    hasrough::Bool
-end
-
-getfeaturename(f::FeatureDescriptor) = f.name
-getpartzero(f::FeatureDescriptor) = f.partzero
-getpartzeroname(f::FeatureDescriptor) = getpartzeroname(getpartzero(f))
-hasmachined(f::FeatureDescriptor) = f.hasmachined
-hasrough(f::FeatureDescriptor) = f.hasrough
-
-function Base.show(io::IO, fd::FeatureDescriptor)
-    print(io, fd.name, " in ", fd.partzero.name,
-    fd.hasmachined ? "; machined, " : "; ! machined, ",
-    fd.hasrough ? "rough" : "! rough")
-end
-
-"""
     LocalizationFeature{R,M}
 
-Supertype of any localization features.
-A localization feature contains a feature
-descriptor ([`FeatureDescriptor`](@ref)) and a rough and machined geometry
+A feature that is machined and allowance can be computed for it.
+It has a name, a [`PartZero`](@ref), and a rough and machined geometry
 ([`AbstractLocalizationGeometry`](@ref)).
-The two geometries must be of same type (hole, plane, etc.).
-If a feature doesn't have a rough of machined state, an empty object should be used
-(and the feature descriptor should also store this information).
-A `LocalizationFeature` must define if it is [`IsPrimitive`](@ref) or [`IsFreeForm`](@ref)
-based on its rough geometry.
+The two geometries should be of same type (hole, plane, etc.),
+but [`HoleLocalizationFeature`](@ref) and [`PlaneLocalizationFeature`](@ref) enforce this
+property
 """
-abstract type LocalizationFeature{R,M} end
+struct LocalizationFeature{R,M}
+    name::String
+    partzero::PartZero
+    rough::R
+    machined::M
+end
 
-# I thought this should cover all subtypes, but it doesn't. But I don't know why
-#GeometryStyle(::Type{LocalizationFeature{R,M}}) where {R,M} = GeometryStyle(R)
+const HoleLocalizationFeature{R,M} = LocalizationFeature{R,M} where {R<:AbstractHoleGeometry, M<:AbstractHoleGeometry}
+
+HoleLocalizationFeature(n, p, r, m) = LocalizationFeature(n, p, r, m)
+
+const PlaneLocalizationFeature{R,M} = LocalizationFeature{R,M} where {R<:AbstractPlaneGeometry, M<:AbstractPlaneGeometry}
+
+PlaneLocalizationFeature(n, p, r, m) = LocalizationFeature(n, p, r, m)
+
+GeometryStyle(::Type{LocalizationFeature{R,M}}) where {R,M} = GeometryStyle(R)
 
 function Base.show(io::IO, lf::LocalizationFeature)
-    print(io, typeof(lf), ": ", lf.descriptor.name)
+    print(io, typeof(lf), ": ", getfeaturename(lf))
 end
 
-struct HoleLocalizationFeature{R<:AbstractHoleGeometry,M<:AbstractHoleGeometry} <: LocalizationFeature{R,M}
-    descriptor::FeatureDescriptor
-    rough::R
-    machined::M
-end
-
-#GeometryStyle(::Type{HoleLocalizationFeature{R,M}}) where {R,M} = GeometryStyle(R)
-
-struct PlaneLocalizationFeature{R<:AbstractPlaneGeometry,M<:AbstractPlaneGeometry} <: LocalizationFeature{R,M}
-    descriptor::FeatureDescriptor
-    rough::R
-    machined::M
-end
-
-#GeometryStyle(::Type{PlaneLocalizationFeature{R,M}}) where {R,M} = GeometryStyle(R)
-
-getfeaturename(f::LocalizationFeature) = getfeaturename(f.descriptor)
-getpartzero(f::LocalizationFeature) = getpartzero(f.descriptor)
-getpartzeroname(f::LocalizationFeature) = getpartzeroname(f.descriptor)
-hasmachined(f::LocalizationFeature) = hasmachined(f.descriptor)
-hasrough(f::LocalizationFeature) = hasrough(f.descriptor)
+getfeaturename(f::LocalizationFeature) = f.name
+getpartzero(f::LocalizationFeature) = getpartzero(f.partzero)
+getpartzeroname(f::LocalizationFeature) = getpartzeroname(f.partzero)
 
 getroughfeaturepoint(f::LocalizationFeature) = featurepoint(f.rough)
 getmachinedfeaturepoint(f::LocalizationFeature) = featurepoint(f.machined)
@@ -189,7 +154,6 @@ getroughradius(f::LocalizationFeature) = featureradius(f.rough)
 getroughfilteredpoints(f::LocalizationFeature) = filteredsurfacepoints(f.rough)
 
 function getmachinedfeaturepointindatum(f::LocalizationFeature)
-    @assert hasmachined(f)
     v = getmachinedfeaturepoint(f)
     pz = getpartzero(f)
     T = getpartzeroHM(pz)

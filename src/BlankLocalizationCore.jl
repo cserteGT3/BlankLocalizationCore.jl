@@ -15,10 +15,10 @@ export  SimpleHole,
         SimplePlane,
         MeshHole,
         MeshPlane,
-        FeatureDescriptor,
+        LocalizationFeature,
         HoleLocalizationFeature,
         PlaneLocalizationFeature
-
+#=
 export  OptimizationResult,
         Tolerance,
         MultiOperationProblem
@@ -31,7 +31,7 @@ export  allowancetable,
         printallowancetable,
         tolerancetable,
         printtolerancetable
-
+=#
 """Union type for `Float64` and `Nothing`."""
 const FON = Union{Nothing,Float64}
 
@@ -43,8 +43,8 @@ HV(v) = vcat(v, 1)
 
 include("partzeros.jl")
 include("geometries.jl")
-include("optimizationproblem.jl")
-include("optimization.jl")
-include("resultevaluation.jl")
+#include("optimizationproblem.jl")
+#include("optimization.jl")
+#include("resultevaluation.jl")
 
 end
