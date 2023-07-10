@@ -5,7 +5,7 @@ using DataFrames: DataFrame, names, nrow
 using PrettyTables: pretty_table, ft_nonothing, tf_html_minimalist
 using Meshes: SimpleMesh, vertices, boundingbox
 using Logging: @warn
-using LinearAlgebra: norm, dot
+using LinearAlgebra: norm, dot, cross
 using Statistics: mean
 using Printf: @sprintf
 

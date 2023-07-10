@@ -100,3 +100,51 @@ end
     @test isapprox(toleranceddistance(lt21), 25)
     @test isapprox(toleranceddistance(lt22), 35)
 end
+
+@testset "AxisAxisDistance: tolerancedistance" begin
+    ## test error throwing -> should be addressed by #7
+    machined_plane1 = SimplePlane([0,0,0])
+
+    mpoints = Point3[(13,9,7.1), (-100,70,6.9), (5000,-2,7.)]
+    sm1 = SimpleMesh(mpoints, [connect((1,2,3))])
+    mesh_plane1 = MeshPlane(sm1)
+
+    # part zeros are different of the previous ones
+    pz1_front = PartZero("frontpz1", [0,0,0], [0 0 1;1 0 0;0 1 0])
+    pz2_right = PartZero("rightpz2", [10,10,10], [-1 0 0;0 0 1;0 1 0])
+
+    # lf1 simple plane and simple plane
+    lf1 = LocalizationFeature("t1", pz1_front, machined_plane1, machined_plane1)
+    # lf2 simple plane and mesh plane
+    lf2 = LocalizationFeature("tf1", pz1_front, machined_plane1, mesh_plane1)
+
+    t1_mr = LocalizationTolerance(lf1, BLC.ROUGH, lf2, BLC.MACHINED, AxisAxisDistance(), 0, 0, 0, "")
+    t1_rm = LocalizationTolerance(lf2, BLC.MACHINED, lf1, BLC.ROUGH, AxisAxisDistance(), 0, 0, 0, "")
+    @test_throws ErrorException toleranceddistance(t1_mr)
+    @test_throws ErrorException toleranceddistance(t1_rm)
+
+    # plane and hole test
+    t1_mm = LocalizationTolerance(lf1, BLC.MACHINED, lf2, BLC.ROUGH, AxisAxisDistance(), 0, 0, 0, "")
+    @test_throws ErrorException toleranceddistance(t1_mm)
+
+    ## test distance calculation
+
+    sh1_machined = SimpleHole([10, 0, 0], 15)
+    sh2_machined = SimpleHole([5, 10, 15], 15)
+    sh1_rough = SimpleHole([0, 10, 0], 14.9)
+    sh2_rough = SimpleHole([5, 25, 20], 14.9)
+
+    fh1 = LocalizationFeature("fronth1", pz1_front, sh1_rough, sh1_machined)
+
+    rh1 = LocalizationFeature("righth1", pz2_right, sh2_rough, sh2_machined)
+
+    # all comibinations of rough-machined should be the same
+    aat1 = LocalizationTolerance(fh1, BLC.MACHINED, rh1, BLC.MACHINED, AxisAxisDistance(), 20, 20, 20, "")
+    aat2 = LocalizationTolerance(fh1, BLC.MACHINED, rh1, BLC.ROUGH, AxisAxisDistance(), 20, 20, 20, "")
+    aat3 = LocalizationTolerance(fh1, BLC.ROUGH, rh1, BLC.MACHINED, AxisAxisDistance(), 20, 20, 20, "")
+    aat4 = LocalizationTolerance(fh1, BLC.ROUGH, rh1, BLC.ROUGH, AxisAxisDistance(), 20, 20, 20, "")
+    @test isapprox(toleranceddistance(aat1), 20)
+    @test isapprox(toleranceddistance(aat2), 20)
+    @test isapprox(toleranceddistance(aat3), 20)
+    @test isapprox(toleranceddistance(aat4), 20)
+end

@@ -99,6 +99,45 @@ function toleranceddistance(type::PlaneAxisDistance, f1, m1, f2, m2)
     return distance
 end
 
+function toleranceddistance(type::AxisAxisDistance, f1, m1, f2, m2)
+    # this is rather point-point distance
+    # 1. get feature points
+    # 2. get axes of feature points
+    # 3. compute the distance of the feature points
+    # 4. project the distance along cross product of the two axes
+    
+    # current implementation only handles IsPrimitive features
+    geom1 = m1 == MACHINED ? f1.machined : f1.rough
+    geom2 = m2 == MACHINED ? f2.machined : f2.rough
+    gs1 = GeometryStyle(typeof(geom1))
+    gs2 = GeometryStyle(typeof(geom2))
+
+    if (gs1) != IsPrimitive() || gs2 != IsPrimitive()
+        error("AxisAxisDistance is only implemented when both features are IsPrimitive!
+        f1 is $gs1, f2 is $gs2")
+    end
+
+    if ! (geom1 isa AbstractHoleGeometry) || ! (geom2 isa AbstractHoleGeometry)
+        error("AxisAxisDistance is defined for a hole and a hole.
+        Got types: $(typeof(geom1)) and $(typeof(geom2))")
+    end
+
+    fp1 = m1 == MACHINED ? getmachinedfeaturepointindatum(f1) : getroughfeaturepoint(f1)
+    fp2 = m2 == MACHINED ? getmachinedfeaturepointindatum(f2) : getroughfeaturepoint(f2)
+
+    # TODO
+    # what if the two axes are parallel?
+    zaxis1 = zaxis(getpartzero(f1))
+    zaxis2 = zaxis(getpartzero(f2))
+
+    perpend_v = cross(zaxis1, zaxis2)
+
+    distancev = fp1 - fp2
+    distance = abs(dot(perpend_v, distancev))
+
+    return distance
+end
+
 
 
 
