@@ -66,6 +66,39 @@ function toleranceddistance(type::PlanePlaneDistance, f1, m1, f2, m2)
     return d
 end
 
+function toleranceddistance(type::PlaneAxisDistance, f1, m1, f2, m2)
+    # this is rather plane-point distance
+    # 1. get plane normal -> part zero z axis
+    # 2. get feature point of both features
+    # 3. compute the distance of the feature points
+    # 4. project the distance to the z axis
+    
+    # current implementation only handles IsPrimitive features
+    geom1 = m1 == MACHINED ? f1.machined : f1.rough
+    geom2 = m2 == MACHINED ? f2.machined : f2.rough
+    gs1 = GeometryStyle(typeof(geom1))
+    gs2 = GeometryStyle(typeof(geom2))
+
+    if (gs1) != IsPrimitive() || gs2 != IsPrimitive()
+        error("PlaneAxisDistance is only implemented when both features are IsPrimitive!
+        f1 is $gs1, f2 is $gs2")
+    end
+
+    if ! (geom1 isa AbstractPlaneGeometry) || ! (geom2 isa AbstractHoleGeometry)
+        error("PlaneAxisDistance is defined for a plane and a hole.
+        Got types: $(typeof(geom1)) and $(typeof(geom2))")
+    end
+
+    plane_n = zaxis(getpartzero(f1))
+    fp_plane = m1 == MACHINED ? getmachinedfeaturepointindatum(f1) : getroughfeaturepoint(f1)
+    fp_hole = m2 == MACHINED ? getmachinedfeaturepointindatum(f2) : getroughfeaturepoint(f2)
+
+    distancev = fp_plane - fp_hole
+    distance = abs(dot(plane_n, distancev))
+    
+    return distance
+end
+
 
 
 
