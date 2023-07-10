@@ -138,7 +138,49 @@ function toleranceddistance(type::AxisAxisDistance, f1, m1, f2, m2)
     return distance
 end
 
+function toleranceddistance(type::AxisAxisConcentric, f1, m1, f2, m2)
+    # this is rather point-point distance
+    # 1. get feature points
+    # 2. compute the distance of the feature points
+    # 4. project the distance to the normal of the axes' of the holes
+    
+    # current implementation only handles IsPrimitive features
+    geom1 = m1 == MACHINED ? f1.machined : f1.rough
+    geom2 = m2 == MACHINED ? f2.machined : f2.rough
+    gs1 = GeometryStyle(typeof(geom1))
+    gs2 = GeometryStyle(typeof(geom2))
 
+    if (gs1) != IsPrimitive() || gs2 != IsPrimitive()
+        error("AxisAxisConcentric is only implemented when both features are IsPrimitive!
+        f1 is $gs1, f2 is $gs2")
+    end
+
+    if ! (geom1 isa AbstractHoleGeometry) || ! (geom2 isa AbstractHoleGeometry)
+        error("AxisAxisConcentric is defined for a hole and a hole.
+        Got types: $(typeof(geom1)) and $(typeof(geom2))")
+    end
+
+    #check if axes are parallel
+    zaxis1 = zaxis(getpartzero(f1))
+    zaxis2 = zaxis(getpartzero(f2))
+    if abs(dot(zaxis1, zaxis2)) < cosd(5)
+        error("Holes' axes are not parallel!
+        Can't compute `AxisAxisConcentric` tolerance.")
+    end
+
+    fp1 = m1 == MACHINED ? getmachinedfeaturepointindatum(f1) : getroughfeaturepoint(f1)
+    fp2 = m2 == MACHINED ? getmachinedfeaturepointindatum(f2) : getroughfeaturepoint(f2)
+
+    # distancev is in workpiece datum
+    distancev = fp1 - fp2
+    # needs to be in part zero orientation, so the "x-y distance" of the two feature points
+    # can be calculated
+    iR = inv(getpartzero(f1).rotation)
+    dv = iR*distancev
+    distance = norm(dv[1:2])
+
+    return distance
+end
 
 
 struct LocalizationTolerance

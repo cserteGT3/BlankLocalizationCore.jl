@@ -148,3 +148,30 @@ end
     @test isapprox(toleranceddistance(aat3), 20)
     @test isapprox(toleranceddistance(aat4), 20)
 end
+
+@testset "AxisAxisConcentric: tolerancedistance" begin
+    pz2_right = PartZero("rightpz2", [10,10,10], [-1 0 0;0 0 1;0 1 0])
+    pz3_right = PartZero("rightpz3", [0,0,0], [-1 0 0;0 0 1;0 1 0])
+    
+    aac1_m = SimpleHole([0,0,19], 15)
+    aac1_r = SimpleHole([10.1,28.9,10.1], 15)
+    
+    aac2_m = SimpleHole([-10, 10, 37], 15)
+    aac2_r = SimpleHole([9, 36, 9], 15)
+    
+    # distance aac1_m -> aac1_r: sqrt(2)/10
+    # distance aac1_m -> aac2_m: 0
+    
+    # distance aac2_m -> aac2_r: sqrt(2)
+    
+    aac_lf1 = LocalizationFeature("righth1", pz2_right, aac1_r, aac1_m)
+    aac_lf2 = LocalizationFeature("righth2", pz3_right, aac2_r, aac2_m)
+    
+    aac1 = LocalizationTolerance(aac_lf1, BLC.MACHINED, aac_lf1, BLC.ROUGH, AxisAxisConcentric(), sqrt(2)/10, 0,0, "")
+    aac2 = LocalizationTolerance(aac_lf1, BLC.MACHINED, aac_lf2, BLC.MACHINED, AxisAxisConcentric(), 0, 0,0, "")
+    aac3 = LocalizationTolerance(aac_lf2, BLC.ROUGH, aac_lf2, BLC.MACHINED, AxisAxisConcentric(), sqrt(2), 0,0, "")
+    
+    @test isapprox(toleranceddistance(aac1), sqrt(2)/10)
+    @test isapprox(toleranceddistance(aac2), 0)
+    @test isapprox(toleranceddistance(aac3), sqrt(2))
+end
