@@ -173,3 +173,16 @@ function getmachinedfeaturepointindatum(f::LocalizationFeature)
     v_indatum = T*HV(v)
     return v_indatum[1:3]
 end
+
+"""
+    transformmachined2datum(feature, points)
+
+Transform a list of points with the part zero of `feature`.
+"""
+function transformmachined2datum(feature, points)
+    pz = getpartzero(feature)
+    M = getpartzeroHM(pz)
+    newpoints = (M*HV(p) for p in points)
+    resultpoints = [p[1:3] for p in newpoints]
+    return resultpoints
+end

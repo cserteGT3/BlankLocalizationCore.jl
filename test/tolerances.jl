@@ -149,7 +149,7 @@ end
     @test isapprox(toleranceddistance(aat4), 20)
 end
 
-@testset "AxisAxisConcentric: tolerancedistance" begin
+@testset "AxisAxisConcentric: primitive-primitive tolerancedistance" begin
     pz2_right = PartZero("rightpz2", [10,10,10], [-1 0 0;0 0 1;0 1 0])
     pz3_right = PartZero("rightpz3", [0,0,0], [-1 0 0;0 0 1;0 1 0])
     
@@ -174,4 +174,37 @@ end
     @test isapprox(toleranceddistance(aac1), sqrt(2)/10)
     @test isapprox(toleranceddistance(aac2), 0)
     @test isapprox(toleranceddistance(aac3), sqrt(2))
+end
+
+@testset "AxisAxisConcentric: primitive-freeform tolerancedistance" begin
+    pz_aac = PartZero("aac", [0,0,0], [1 0 0;0 1 0;0 0 1])
+
+    # unit circle, with center at (0,0,0)
+    aacpf_h = SimpleHole([0,0,0], 1)
+
+    aac_ps1 = Point3[(0,1,0),(1,0,1),(cosd(45), sind(45),-1)]
+    aac_c1 = [connect((1,2,3))]
+    aac_mesh1 = MeshHole(SimpleMesh(aac_ps1, aac_c1), [])
+
+    aacpf_lf1 = LocalizationFeature("h1", pz_aac, aac_mesh1, aacpf_h)
+    t_aacpf1 = LocalizationTolerance(aacpf_lf1, BLC.MACHINED, aacpf_lf1, BLC.ROUGH, AxisAxisConcentric(), 1,1,1,"")
+    @test isapprox(toleranceddistance(t_aacpf1), 1)
+
+    # every point is on radius 2 circle
+    aac_ps2 = Point3[(0,2,14), (-2,0,0), (2*cosd(30), 2*sind(30),-1), (2*cosd(130), 2*sind(130), 17)]
+    sm2 = SimpleMesh(aac_ps2, aac_c1)
+    aac_mesh2 = MeshHole(sm2, [])
+
+    aacpf_lf2 = LocalizationFeature("h1", pz_aac, aac_mesh2, aacpf_h)
+    t_aacpf2 = LocalizationTolerance(aacpf_lf2, BLC.MACHINED, aacpf_lf2, BLC.ROUGH, AxisAxisConcentric(), 1,0,2,"")
+    @test isapprox(toleranceddistance(t_aacpf2), 2)
+
+    # every point is on 0.5 radius circle
+    aac_ps3 = Point3[(0,0.5,0), (-0.5,0,4), (0.5*cosd(30), 0.5*sind(30),-6), (0.5*cosd(130), 0.5*sind(130), 17)]
+    sm3 = SimpleMesh(aac_ps3, aac_c1)
+    aac_mesh3 = MeshHole(sm3, [])
+
+    aacpf_lf3 = LocalizationFeature("h1", pz_aac, aac_mesh3, aacpf_h)
+    t_aacpf3 = LocalizationTolerance(aacpf_lf3, BLC.MACHINED, aacpf_lf3, BLC.ROUGH, AxisAxisConcentric(), 1,0.5,1.5,"")
+    @test isapprox(toleranceddistance(t_aacpf3), 0.5)
 end
