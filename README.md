@@ -6,7 +6,26 @@
 
 This repository contains the reference implentation for the multi operation blank localization technique described in our paper _Multi-operation optimal blank localization for near net shape machining_.
 The paper is available is here: <https://www.sciencedirect.com/science/article/pii/S0007850623000884>.
-If you use find this work useful, please cite the paper:
+
+The goal of multi operation blank localization is to align the CNC machining code for the rough (e.g. cast, 3D printed, etc.) parts.
+When doing so, one must consider two important factors:
+
+- leaving enough material to be removed by the tool (machining allowance)
+- respecting the dimensional tolerances between features (defined on the part drawing)
+
+Our paper proposes a method, that ensures a proper machining allowance (minimum requirement), while trying to optimize to the center of the tolerance fields between features.
+
+The documentation goes through a detailed example of the process while showing how to use the package.
+
+## Design goals
+
+_Note_: minimum required Julia version is 1.6 due to StaticArrays.jl dependency!
+
+This is a one on one implementation of the optimization model described in the above mentioned paper.
+As processing different types of measurement data (such as coordinate measurement machine, or a 3D scanner) requires different methods and techniqes, a well designed interface is available.
+The aim is to make it easy to adapt our methodology to any measurement types available.
+
+If you use find this work useful, please cite our paper:
 
 ```txt
 @article{cserteg:2023_MultioperationOptimalBlank,
@@ -19,13 +38,3 @@ If you use find this work useful, please cite the paper:
   doi = {10.1016/j.cirp.2023.04.049},
 }
 ```
-
-## Multi operation blank localization summary
-
-## Design goals
-
-_Note_: minimum required Julia version is 1.6 due to StaticArrays.jl dependency!
-
-This is a one on one implementation of the optimization model described in the above mentioned paper.
-As processing different types of measurement data (such as coordinate measurement machine, or a 3D scanner) requires different methods and techniqes, a well designed interface is available.
-The aim is to make it easy to adapt our methodology to any measurement types available.
