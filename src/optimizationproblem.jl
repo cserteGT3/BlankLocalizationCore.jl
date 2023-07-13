@@ -14,48 +14,39 @@ end
 
 emptyor() = OptimizationResult("empty", 0.0)
 
-struct Tolerance
-    featurename1::String
-    ismachined1::Bool
-    projection::Function
-    featurename2::String
-    ismachined2::Bool
-    nominalvalue::Float64
-    lowervalue::Float64
-    uppervalue::Float64
-    note::String
-end
-
 mutable struct MultiOperationProblem
     partzeros::Vector{PartZero}
-    holes::Vector{HoleLocalizationFeature}
-    planes::Vector{PlaneLocalizationFeature}
-    tolerances::Vector{Tolerance}
+    features::Vector{LocalizationFeature} # features that have rough and machined -> allowanced
+    tolerances::Vector{LocalizationTolerance}
     parameters::Dict{String,Real}
     opresult::OptimizationResult
 end
 
-function MultiOperationProblem(partzeros, holes, planes, tolerances, parameters)
-    return MultiOperationProblem(partzeros, holes, planes, tolerances, parameters, emptyor())
+function MultiOperationProblem(partzeros, features, tolerances, parameters)
+    return MultiOperationProblem(partzeros, features, tolerances, parameters, emptyor())
 end
 
 function problemtype(mop::MultiOperationProblem)
     # problem type is depending on the rough geometries: IsPrimitive or IsFreeForm
     # if there is at least one IsFreeForm rough geometry -> hybrid problem
-    holetypes = GeometryStyle.(typeof.(x.rough for x in mop.holes))
-    for ht in holetypes
-        ht === IsFreeForm() && return :HybridProblem
-    end
-    planetypes = GeometryStyle.(typeof.(x.rough for x in mop.planes))
-    for pt in planetypes
-        pt === IsFreeForm() && return :HybridProblem
+    featuretypes = GeometryStyle.(typeof.(x.rough for x in mop.features))
+    for ft in featuretypes
+        ft === IsFreeForm() && return :HybridProblem
     end
     return :PrimitiveProblem
 end
 
+function collectholefeatures(mop::MultiOperationProblem)
+    filter(x->x isa HoleLocalizationFeature, mop.features)
+end
+
+function collectplanefeatures(mop::MultiOperationProblem)
+    filter(x->x isa PlaneLocalizationFeature, mop.features)
+end
+
 function Base.show(io::IO, mop::MultiOperationProblem)
-    nh = size(mop.holes, 1)
-    np = size(mop.planes, 1)
+    nh = size(collectholefeatures(mop), 1)
+    np = size(collectplanefeatures(mop), 1)
     npz = size(mop.partzeros, 1)
     nts = size(mop.tolerances, 1)
     sn = string(problemtype(mop))
@@ -92,54 +83,19 @@ It is assumed that all features have distinct names.
 Return `nothing`, if no feature is found with `featurename`.
 """
 function getfeaturebyname(mop::MultiOperationProblem, featurename)
-    function retbyname(array, name)
-        for f in array
-            if getfeaturename(f) == name
-                return f
-            end
+    for f in mop.features
+        if getfeaturename(f) == featurename
+            return f
         end
-        return nothing
     end
-
-    hole_ = retbyname(mop.holes, featurename)
-    isnothing(hole_) || return hole_
-    # return plane even if it is nothing
-    return retbyname(mop.planes, featurename)
+    return nothing
 end
 
 """
-    collectholesbypartzero(mop::MultiOperationProblem, partzeroname)
+    collectfeaturesbypartzero(mop::MultiOperationProblem, partzeroname)
 
-Collect holes that are grouped to part zero called `partzeroname`.
+Collect features that are grouped to part zero called `partzeroname`.
 """
-function getholesbypartzero(mop::MultiOperationProblem, partzeroname)
-    return filter(x->getpartzeroname(x) == partzeroname, mop.holes)
+function collectfeaturesbypartzero(mop::MultiOperationProblem, partzeroname)
+    return filter(x->getpartzeroname(x) == partzeroname, mop.features)
 end
-
-"""
-    collectmachinedholes(mop::MultiOperationProblem)
-
-Collect holes that have a machined state.
-"""
-collectmachinedholes(mop::MultiOperationProblem) = filter(hasmachined, mop.holes)
-
-"""
-    collectmachinedplanes(mop::MultiOperationProblem)
-
-Collect planes that have a machined state.
-"""
-collectmachinedplanes(mop::MultiOperationProblem) = filter(hasmachined, mop.planes)
-
-"""
-    collectroughholes(mop::MultiOperationProblem)
-
-Collect those holes, that have rough stage.
-"""
-collectroughholes(mop::MultiOperationProblem) = filter(hasrough, mop.holes)
-
-"""
-    collectroughplanes(mop::MultiOperationProblem)
-
-Collect those planes, that have rough stage.
-"""
-collectroughplanes(mop::MultiOperationProblem) = filter(hasrough, mop.planes)

@@ -27,11 +27,9 @@ export  PlanePlaneDistance,
         LocalizationTolerance,
         toleranceddistance
 
-#=
 export  OptimizationResult,
-        Tolerance,
         MultiOperationProblem
-
+#=
 export  createjumpmodel,
         setjumpresult!,
         optimizeproblem!
@@ -53,8 +51,8 @@ HV(v) = vcat(v, 1)
 include("partzeros.jl")
 include("geometries.jl")
 include("tolerances.jl")
-#include("optimizationproblem.jl")
-#include("optimization.jl")
+include("optimizationproblem.jl")
+include("optimization.jl")
 #include("resultevaluation.jl")
 
 end
