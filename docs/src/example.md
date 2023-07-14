@@ -6,6 +6,7 @@ Todo:
 * add workpiece datum to images (in Inventor)
 * implementation: hole: radial allowance, plane: axial allowance (different from the paper)
 * hole 2 z rosszul van méretezve a cnc poses-nál
+* API extension should be described, as it is major feature of the package
 
 ## Example part
 
@@ -139,3 +140,79 @@ backhole2_r = SimpleHole([-3, 16, 54], 6)
 backface1_r = SimplePlane([-3, 44, 54])
 backface2_r = SimplePlane([-3, 16, 54])
 ```
+
+## Pairing the rough and machined features
+
+To create [`LocalizationFeature`](@ref)s, that will be subject to the optimizatio, a [`FeatureDescriptor`](@ref) is needed to be defined for each.
+This "joins" a rough and machined geometry, and contains information such as the name and part zero of the feature and if a feature has a machined and rough state.
+(There are cases, when this can be important, for this example all features have machined and rough state).
+
+This will look like this in julia:
+
+```julia
+## Geometry pairing and feature descriptors
+
+# Feature descriptors for each feature
+
+fd_fronthole = FeatureDescriptor("fronthole", pzf, true, true)
+fd_frontface = FeatureDescriptor("frontface", pzf, true, true)
+
+fd_righthole1 = FeatureDescriptor("righthole1", pzr, true, true)
+fd_righthole2 = FeatureDescriptor("righthole2", pzr, true, true)
+fd_righthole3 = FeatureDescriptor("righthole3", pzr, true, true)
+fd_rightface1 = FeatureDescriptor("rightface1", pzr, true, true)
+fd_rightface2 = FeatureDescriptor("rightface2", pzr, true, true)
+fd_rightface3 = FeatureDescriptor("rightface3", pzr, true, true)
+
+fd_backhole1 = FeatureDescriptor("backhole1", pzb, true, true)
+fd_backhole2 = FeatureDescriptor("backhole2", pzb, true, true)
+fd_backface1 = FeatureDescriptor("backface1", pzb, true, true)
+fd_backface2 = FeatureDescriptor("backface2", pzb, true, true)
+
+# Hole features
+
+holes = [HoleLocalizationFeature(fd_fronthole, fronthole_r, fronthole_m),
+    HoleLocalizationFeature(fd_righthole1, righthole1_r, righthole1_m),
+    HoleLocalizationFeature(fd_righthole2, righthole2_r, righthole2_m),
+    HoleLocalizationFeature(fd_righthole3, righthole3_r, righthole3_m),
+    HoleLocalizationFeature(fd_backhole1, backhole1_r, backhole1_m),
+    HoleLocalizationFeature(fd_backhole2, backhole2_r, backhole2_m)
+    ]
+
+# Face features
+planes = [PlaneLocalizationFeature(fd_frontface, frontface_r, frontface_m),
+PlaneLocalizationFeature(fd_rightface1, rightface1_r, rightface1_m),
+PlaneLocalizationFeature(fd_rightface2, rightface2_r, rightface2_m),
+PlaneLocalizationFeature(fd_rightface3, rightface3_r, rightface3_m),
+PlaneLocalizationFeature(fd_backface1, backface1_r, backface1_m),
+PlaneLocalizationFeature(fd_backface2, backface2_r, backface2_m)
+]
+```
+
+## Tolerances
+
+A tolerance is described between two feature (their feature point to be precise), and their distance is calculated with a certain projection (usually projection to one of the axis of the workpiece datum, but any R^3->R transformation can be used).
+This projected distance must be between the lower and upper values of the tolerance.
+Tolerance can be defined between both rough and/or machined features.
+
+For this example, the tolerances are created based on the drawing of the machined part.
+This is the drawing, which only contains dimensions related to the optimization problem.
+It is also available as a pdf [here](../assets/example-part-machined-tolerances.pdf).
+
+![Tolerances](../assets/example-part-machined-tolerances.png)
+
+| Feature 1 name | Feature 1 is machined/rough | Projection | Feature 2 is machined/rough | Nominal value | Lower value | Upper value | Notes (if any) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+
+
+
+## Constructing and solving the optimization problem
+
+A few parameters are needed for the optimization problem, passed to the object as a dictionary.
+These are:
+
+| Name (key) | Description | Suggested value | Optional |
+| --- | ---  | --- | --- |
+| minALlowance | Minimum allowance that must be achieved even by the lowest value. | `0.1` | Obligatory |
+| OptimizeForToleranceCenter | The default method is to optimize for the middle (center) of the tolerance fields. For debugging, one can set it to `false`, then the minimum allowance will be maximised (ignoring the `minAllowance` value). | `true` | Obligatory |
+| UseTolerances | Also a debugging feature. Tolerance lower-upper values are added as active constraints on the distance of the corresponding features. This can be turned off with this flag. | `true` | Obligatory |
