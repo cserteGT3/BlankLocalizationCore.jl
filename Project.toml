@@ -17,6 +17,7 @@ JuMP = "1.4"
 DataFrames = "1"
 PrettyTables = "2"
 julia = "1.6"
+Meshes = "0.32"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

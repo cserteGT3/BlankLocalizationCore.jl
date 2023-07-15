@@ -3,7 +3,7 @@ module BlankLocalizationCore
 using JuMP
 using DataFrames: DataFrame, names, nrow
 using PrettyTables: pretty_table, ft_nonothing, tf_html_minimalist
-using Meshes: SimpleMesh, vertices, boundingbox
+using Meshes: SimpleMesh, vertices, boundingbox, connect, Point3, Vec3, Plane, Cylinder
 using Logging: @warn
 using LinearAlgebra: norm
 using Printf: @sprintf
@@ -31,6 +31,11 @@ export  allowancetable,
         tolerancetable,
         printtolerancetable
 
+export  genroughholes,
+        genmachinedholes,
+        genroughplanes,
+        genmachinedplanes
+
 """Union type for `Float64` and `Nothing`."""
 const FON = Union{Nothing,Float64}
 
@@ -44,5 +49,6 @@ include("partzeros.jl")
 include("geometries.jl")
 include("optimization.jl")
 include("resultevaluation.jl")
+include("visualization.jl")
 
 end

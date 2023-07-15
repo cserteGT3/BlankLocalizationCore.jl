@@ -81,21 +81,6 @@ function getpartzerobyname(partzeros::Vector{PartZero}, partzeroname::AbstractSt
     return nothing
 end
 
-"""
-    getcoordinateindatumorientation(partzero::PartZero, v, axis::Int)
-
-Get the `axis`th coordinate of vector `v` in the orientation of the workpiece datum.
-(Inverse transformed with the part zero, the part zero's position being zero.)
-"""
-function getcoordinateindatumorientation(partzero::PartZero, v, axis::Int)
-    M = getpartzeroHM(partzero)
-    M[1:3,4] = [0,0,0]
-    #iM = inv(M)
-    fv = M*vcat(v, 1)
-    # not sure why, but part zero is needed, not its inverted part
-    #fv = iM*vcat(v, 1)
-    return fv[axis]
-end
 
 """
     printpartzeropositions(partzeros::Vector{PartZero})
