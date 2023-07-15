@@ -198,18 +198,73 @@ It is also available as a pdf [here](../assets/example-part-machined-tolerances.
 
 ![Tolerances](../assets/example-part-machined-tolerances.png)
 
-| Feature 1 name | Feature 1 is machined/rough | Projection | Feature 2 is machined/rough | Nominal value | Lower value | Upper value | Notes (if any) |
-| --- | --- | --- | --- | --- | --- | --- | --- |
+Axes in the "Pojection" column mean the axes of the workpiece datum.
+The distance of the two features' feature points are projected to those axes.
 
+| {#} | F1 name | F1: machined/rough | Projection | F2 name | F2: machined/rough | Nominal value | Lower value | Upper value |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | right face 1 | machined | y axis | front hole | machined | 41 | 40.7 | 41.3 |
+| 2 | back hole 1 | machined | y axis | front hole | machined | 14 | 13.8 | 14.2 |
+| 3 | back hole 2 | machined | y axis | front hole | machined | 14 | 13.8 | 14.2 |
+| 4 | back hole 1 | machined | z axis | front hole | machined | 14 | 13.8 | 14.2 |
+| 5 | back hole 2 | machined | z axis | front hole | machined | 14 | 13.8 | 14.2 |
+| 6 | right face 3 | machined | y axis | front hole | machined | 38 | 37.7 | 38.3 |
+| 7 | right face 2 | machined | y axis | front hole | machined | 44 | 43.7 | 44.3 |
+| 8 | right hole 3 | machined | x axis | front face | machined | 60 | 59.7 | 60.3 |
+| 9 | right hole 2 | machined | x axis | front face | machined | 25 | 24.8 | 25.2 |
+| 10 | right hole 1 | machined | x axis | front face | machined | 16 | 15.8 | 16.2 |
+| 11 | right hole 1 | machined | z axis | front hole | machined | 15 | 14.8 | 15.2 |
+| 12 | right hole 2 | machined | z axis | front hole | machined | 16 | 15.8 | 16.2 |
+| 13 | front face | machined | x axis | back face 1 | rough | 85 | 84.6 | 85.4 |
+| 14 | front face | machined | x axis | back face 2 | rough | 85 | 84.6 | 85.4 |
+| 15 | right hole 3 | machined | z axis | front hole | machined | 0 | -0.2 | 0.2 |
 
+To express these tolerances in julia, the following code is used.
+The above table is changed with the followings:
+
+* Those feature names are used, that we defined in the `FeatureDescriptor`s.
+* Where the machined state of a feature is used, a `true` used, and `false` for rough state.
+* Three functions are defined that do the projection: `xfunc`, `yfunc`, `zfunc`. Those are passed to the struct constructor.
+* The julia struct also contains a note string, the numbering of the tolerances are given there for this example.
+
+```julia
+## Tolerances
+
+xfunc(x) = x[1]
+yfunc(x) = x[2]
+zfunc(x) = x[3]
+
+tolerances = [Tolerance("rightface1", true, yfunc, "fronthole", true, 41, 40.7, 41.3, "1"),
+Tolerance("backhole1", true, yfunc, "fronthole", true, 14, 13.8, 14.2, "2"),
+Tolerance("backhole2", true, yfunc, "fronthole", true, 14, 13.8, 14.2, "3"),
+Tolerance("backhole1", true, zfunc, "fronthole", true, 14, 13.8, 14.2, "4"),
+Tolerance("backhole2", true, zfunc, "fronthole", true, 14, 13.8, 14.2, "5"),
+Tolerance("rightface3", true, yfunc, "fronthole", true, 38, 37.7, 38.3, "6"),
+Tolerance("rightface2", true, yfunc, "fronthole", true, 44, 43.7, 44.3, "7"),
+Tolerance("righthole3", true, xfunc, "frontface", true, 60, 59.7, 60.3, "8"),
+Tolerance("righthole2", true, xfunc, "frontface", true, 25, 24.8, 25.2, "9"),
+Tolerance("righthole1", true, xfunc, "frontface", true, 16, 15.8, 16.2, "10"),
+Tolerance("righthole1", true, zfunc, "fronthole", true, 15, 14.8, 15.2, "11"),
+Tolerance("righthole2", true, zfunc, "fronthole", true, 16, 15.8, 16.2, "12"),
+Tolerance("frontface", true, xfunc, "backface1", false, 85, 84.6, 85.4, "13"),
+Tolerance("frontface", true, xfunc, "backface2", false, 85, 84.6, 85.4, "14"),
+Tolerance("righthole3", true, zfunc, "fronthole", true, 0, -0.2, 0.2, "15")]
+```
 
 ## Constructing and solving the optimization problem
 
 A few parameters are needed for the optimization problem, passed to the object as a dictionary.
 These are:
 
-| Name (key) | Description | Suggested value | Optional |
+| Name (key) | Description | Suggested value | Required? |
 | --- | ---  | --- | --- |
-| minALlowance | Minimum allowance that must be achieved even by the lowest value. | `0.1` | Obligatory |
-| OptimizeForToleranceCenter | The default method is to optimize for the middle (center) of the tolerance fields. For debugging, one can set it to `false`, then the minimum allowance will be maximised (ignoring the `minAllowance` value). | `true` | Obligatory |
-| UseTolerances | Also a debugging feature. Tolerance lower-upper values are added as active constraints on the distance of the corresponding features. This can be turned off with this flag. | `true` | Obligatory |
+| minAllowance | Minimum allowance that must be achieved even by the lowest value. | `0.1` | Required |
+| OptimizeForToleranceCenter | The default method is to optimize for the middle (center) of the tolerance fields. For debugging, one can set it to `false`, then the minimum allowance will be maximised (ignoring the `minAllowance` value). | `true` | Required |
+| UseTolerances | Also a debugging feature. Tolerance lower-upper values are added as active constraints on the distance of the corresponding features. This can be turned off with this flag. | `true` | Required |
+
+```julia
+## Constructing and solving the optimization problem
+pard = Dict("minAllowance"=>0.5, "OptimizeForToleranceCenter"=>false, "UseTolerances"=>true);
+
+mop = MultiOperationProblem(partzeros, holes, planes, tolerances, pard)
+```
