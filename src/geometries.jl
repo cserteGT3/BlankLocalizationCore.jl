@@ -22,6 +22,13 @@ struct IsPrimitive <: GeometryStyle end
 """Free form geometries are discrete representations, e.g. a mesh or a point cloud."""
 struct IsFreeForm <: GeometryStyle end
 
+"""
+    visualizationgeometry(geom::AbstractLocalizationGeometry)
+
+Return a Meshes.jl object that can be visualized.
+"""
+function visualizationgeometry end
+
 # don't define a global default (currently it helps development and debugging)
 #GeometryStyle(::Type) = IsPrimitive()
 
@@ -69,6 +76,17 @@ end
 
 GeometryStyle(::Type{SimpleHole}) = IsPrimitive()
 
+function visualizationgeometry(hole::SimpleHole)
+    # p1: feature point
+    p1 = Point3(hole.p)
+    # p2: deeper in the hole
+    p2 = p1 - Vec3(0,0,0.01)
+    ax = Vec3(0,0,1)
+    bottom = Plane(p2, ax)
+    top = Plane(p1, ax)
+    return Cylinder(bottom, top, hole.r)
+end
+
 """
 SimplePlane <: AbstractPlaneGeometry
 
@@ -80,6 +98,44 @@ struct SimplePlane <: AbstractPlaneGeometry
 end
 
 GeometryStyle(::Type{SimplePlane}) = IsPrimitive()
+
+function rectangleforplane(point, v1 ,v2, sidelength)
+    c1 = point + sidelength/2*v1 + -1*sidelength/2*v2
+    c2 = c1 + -1*sidelength*v1
+    c3 = c2 + sidelength*v2
+    c4 = c3 + sidelength*v1
+    g1 = Point3(c1)
+    g2 = Point3(c2)
+    g3 = Point3(c3)
+    g4 = Point3(c4)
+    return SimpleMesh([g1,g2,g3,g4], connect.([(1,2,3),(3,4,1)]))
+end
+
+function visualizationgeometry(plane::SimplePlane)
+    return rectangleforplane(plane.p, [1,0,0], [0,1,0], 20)
+end
+
+"""
+PlaneAndNormal <: AbstractPlaneGeometry
+
+A simple plane structure with one point and a normal vector.
+"""
+struct PlaneAndNormal <: AbstractPlaneGeometry
+    p::Vector{Float64}
+    n::Vector{Float64}
+end
+
+GeometryStyle(::Type{PlaneAndNormal}) = IsPrimitive()
+
+# should try first the 3 axes
+randnormal(v::Vector) = normalize(cross(v, rand(3)))
+
+function visualizationgeometry(plane::PlaneAndNormal)
+    o = plane.p
+    v1 = randnormal(plane.n)
+    v2 = cross(v1, plane.n)
+    return rectangleforplane(o, v1, v2, 20)
+end
 
 """
 MeshHole <: AbstractHoleGeometry
@@ -94,6 +150,10 @@ end
 
 GeometryStyle(::Type{MeshHole}) = IsFreeForm()
 
+function visualizationgeometry(meshhole::MeshHole)
+    return meshhole.surface
+end
+
 function filteredsurfacepoints(::IsFreeForm, x::MeshHole)
     return x.convexhull
 end
@@ -107,12 +167,17 @@ struct MeshPlane <: AbstractPlaneGeometry
     surface::SimpleMesh
 end
 
+GeometryStyle(::Type{MeshPlane}) = IsFreeForm()
+
+function visualizationgeometry(meshplane::MeshPlane)
+    return meshplane.surface
+end
+
 function filteredsurfacepoints(::IsFreeForm, x::MeshPlane)
     bbox = boundingbox(x.surface)
     return [bbox.min.coords, bbox.max.coords]
 end
 
-GeometryStyle(::Type{MeshPlane}) = IsFreeForm()
 
 """
 Store description of a feature: its name, the corresponding part zero, if it has or has not

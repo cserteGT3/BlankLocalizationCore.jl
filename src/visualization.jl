@@ -51,61 +51,45 @@ function genmachinedholes(mop::MultiOperationProblem)
     return cylinders
 end
 
-"""
-    genroughplanes(mop::MultiOperationProblem, sidelength=20)
+## try 2
 
-Generate `Meshes.SimpleMesh`s for each rough plane.
-"""
-function genroughplanes(mop::MultiOperationProblem, sidelength=20)
-    geoms = SimpleMesh[]
-    for plane in collectmachinedplanes(mop)
-        pz = getpartzero(plane)
-        T = getpartzeroHM(pz)
-        R = T[1:3, 1:3]
-        o = getroughfeaturepoint(plane)
-        c1 = R*[sidelength/2, -sidelength/2, 0]
-        c2 = c1 + R*[-sidelength, 0, 0]
-        c3 = c2 + R*[0, sidelength, 0]
-        c4 = c3 + R*[sidelength, 0, 0]
-        
-
-        g1 = Point3(o+Vec3(c1))
-        g2 = Point3(o+Vec3(c2))
-        g3 = Point3(o+Vec3(c3))
-        g4 = Point3(o+Vec3(c4))
-        sm = SimpleMesh([g1,g2,g3,g4], connect.([(1,2,3),(3,4,1)]))
-        push!(geoms, sm)
-    end
-    return geoms
+function transformmachinedgeoms(lf::LocalizationFeature)
+    pz = getpartzero(lf)
+    R = pz.rotation
+    rot = RotMatrix{3}(R)
+    # again, I'm not sure about why the inverse...
+    fr = Rotate(inv(rot))
+    ft = Translate(pz.position...)
+    geom = visualizationgeometry(lf.machined)
+    geom2 = fr(geom)
+    return ft(geom2)
 end
 
+# this fails, but this is the way!
+# will fix after:
+# https://github.com/JuliaGeometry/Meshes.jl/issues/512
+# https://github.com/JuliaGeometry/MeshViz.jl/issues/62
+function gmholes(mop::MultiOperationProblem)
+    holes = collectmachinedholes(mop)
+    return [transformmachinedgeoms(h) for h in holes]
+end
 
 """
-    genmachinedplanes(mop::MultiOperationProblem, sidelength=20)
+    genroughplanes(mop::MultiOperationProblem)
 
-Generate `Meshes.SimpleMesh`s for each machined plane.
+Generate Meshes object for each machined plane.
 """
-function genmachinedplanes(mop::MultiOperationProblem, sidelength=20)
-    geoms = SimpleMesh[]
-    for plane in collectmachinedplanes(mop)
-        pz = getpartzero(plane)
-        o = getmachinedfeaturepoint(plane)
-        c1 = o + [sidelength/2, -sidelength/2, 0]
-        c2 = c1 + [-sidelength, 0, 0]
-        c3 = c2 + [0, sidelength, 0]
-        c4 = c3 + [sidelength, 0, 0]
-        R = getpartzeroHM(pz)
-        p1 = R*HV(c1)
-        p2 = R*HV(c2)
-        p3 = R*HV(c3)
-        p4 = R*HV(c4)
+function genmachinedplanes(mop::MultiOperationProblem)
+    planes = collectmachinedplanes(mop)
+    return [transformmachinedgeoms(p) for p in planes]
+end
 
-        g1 = Point3(p1[1:3])
-        g2 = Point3(p2[1:3])
-        g3 = Point3(p3[1:3])
-        g4 = Point3(p4[1:3])
-        sm = SimpleMesh([g1,g2,g3,g4], connect.([(1,2,3),(3,4,1)]))
-        push!(geoms, sm)
-    end
-    return geoms
+"""
+    genroughplanes(mop::MultiOperationProblem)
+
+Generate Meshes object for each rough plane.
+"""
+function genroughplanes(mop::MultiOperationProblem)
+    planes = collectroughplanes(mop)
+    return [visualizationgeometry(p.rough) for p in planes]
 end

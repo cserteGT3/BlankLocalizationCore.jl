@@ -3,9 +3,11 @@ module BlankLocalizationCore
 using JuMP
 using DataFrames: DataFrame, names, nrow
 using PrettyTables: pretty_table, ft_nonothing, tf_html_minimalist
-using Meshes: SimpleMesh, vertices, boundingbox, connect, Point3, Vec3, Plane, Cylinder
+using Rotations: RotMatrix
+using Meshes: SimpleMesh, vertices, boundingbox, connect, Point3, Vec3, Plane, Cylinder,
+    Rotate, Translate
 using Logging: @warn
-using LinearAlgebra: norm
+using LinearAlgebra: norm, cross, normalize, normalize!
 using Printf: @sprintf
 
 export  PartZero,
@@ -13,6 +15,7 @@ export  PartZero,
 
 export  SimpleHole,
         SimplePlane,
+        PlaneAndNormal,
         MeshHole,
         MeshPlane,
         FeatureDescriptor,
