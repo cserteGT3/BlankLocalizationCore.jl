@@ -2,10 +2,7 @@
 
 Todo:
 
-* add feature names to images (in Inventor I guess)
-* add workpiece datum to images (in Inventor)
 * implementation: hole: radial allowance, plane: axial allowance (different from the paper)
-* hole 2 z rosszul van méretezve a cnc poses-nál
 * API extension should be described, as it is major feature of the package
 
 ## Example part
@@ -14,17 +11,17 @@ The following part is crafted for demonstrating purposes.
 The CAD filesa are available here: [machined](../assets/example-part-machined.stl) and [rough](../assets/example-part-rough.stl).
 The two images below show the part from its "front" and "back" sides in its machined state.
 
-![Machined look front](../assets/machined-part-look-front.png)
+![Machined look front](../assets/machined-front.png)
 
-![Machined look back](../assets/machined-part-look-back.png)
+![Machined look back](../assets/machined-back.png)
 
 All six holes needs to be machined and also their front faces, which means that there are six machined planes.
 
 The part in its rough (to be machined) state is shown below:
 
-![Rough look front](../assets/rough-look-front.png)
+![Rough look front](../assets/rough-front.png)
 
-![Rough look back](../assets/rough-look-back.png)
+![Rough look back](../assets/rough-back.png)
 
 The rough part is also designed in CAD, of course in production the dimensions of the rough part come from a measurement process.
 It can be seen, that the holes on the rough part are smaller, and their axes' are also modified a little bit in a few cases to showcase the possibilities of the algorithm.
@@ -115,8 +112,8 @@ The rough features are measured relative to the workpiece datum and are listed b
 | right face 1 | [66, 71.5, 55] |  |
 | right face 2 | [58, 74.5, 24] |  |
 | right face 3 | [21.5, 68.5, 40] |  |
-| back hole 1 | [-3, 44, 54] | 6 |
-| back hole 2 | [-3, 16, 54] | 6 |
+| back hole 1 | [-3, 44, 53.9] | 6.2 |
+| back hole 2 | [-3, 16.1, 54] | 6.25 |
 | back face 1 | [-3, 44, 54] |  |
 | back face 2 | [-3, 16, 54] |  |
 
@@ -130,13 +127,13 @@ frontface_r = SimplePlane([82.5, 30, 40])
 
 righthole1_r = SimpleHole([66, 71.5, 55], 6)
 righthole2_r = SimpleHole([58, 74.5, 24], 4.905)
-righthole3_r = SimpleHole([21.5, 68.5, 40], 16)
+righthole3_r = SimpleHole([21.5, 68.5, 40], 8)
 rightface1_r = SimplePlane([66, 71.5, 55])
 rightface2_r = SimplePlane([58, 74.5, 24])
 rightface3_r = SimplePlane([21.5, 68.5, 40])
 
-backhole1_r = SimpleHole([-3, 44, 54], 6)
-backhole2_r = SimpleHole([-3, 16, 54], 6)
+backhole1_r = SimpleHole([-3, 44, 53.9], 6.2)
+backhole2_r = SimpleHole([-3, 16.1, 54], 6.25)
 backface1_r = SimplePlane([-3, 44, 54])
 backface2_r = SimplePlane([-3, 16, 54])
 ```
