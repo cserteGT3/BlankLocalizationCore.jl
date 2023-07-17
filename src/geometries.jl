@@ -14,13 +14,21 @@ abstract type AbstractPlaneGeometry <: AbstractLocalizationGeometry end
 # hole OR plane: trait/abstract type/type parameter???
 
 
-"""Trait that describes the "style" of an [`AbstractLocalizationGeometry`](@ref)."""
+"""
+    GeometryStyle
+
+Trait that describes the "style" of an [`AbstractLocalizationGeometry`](@ref).
+Currently it can be either [`IsPrimitive`](@ref) or [`IsFreeForm`](@ref).
+"""
 abstract type GeometryStyle end
 
 """Primitive geometries can be explicitly described, e.g. a box or sphere."""
 struct IsPrimitive <: GeometryStyle end
 """Free form geometries are discrete representations, e.g. a mesh or a point cloud."""
 struct IsFreeForm <: GeometryStyle end
+
+# don't define a global default (currently it helps development and debugging)
+#GeometryStyle(::Type) = IsPrimitive()
 
 """
     visualizationgeometry(geom::AbstractLocalizationGeometry)
@@ -29,34 +37,59 @@ Return a Meshes.jl object that can be visualized.
 """
 function visualizationgeometry end
 
-# don't define a global default (currently it helps development and debugging)
-#GeometryStyle(::Type) = IsPrimitive()
+"""
+    featurepoint()
 
-# Functions to be implemented to comply with the interface:
-# primitive features have feature points
+Return the feature point of an [`IsPrimitive`](@ref) geometry.
+Definition signature should look like: `featurepoint(::IsPrimitive, x)`.
+"""
+function featurepoint end
+
+"""
+    surfacepoints()
+
+Return the points of the surface of an [`IsFreeForm`](@ref) geometry.
+Definition signature should look like: `surfacepoints(::IsFreeForm, x)`.
+"""
+function surfacepoints end
+
+"""
+    filteredsurfacepoints()
+
+Return the filtered points of the surface of an [`IsFreeForm`](@ref) geometry, 
+that may define active constraints in the optimization task
+(for example convex hull of mesh).
+Definition signature should look like: `filteredsurfacepoints(::IsFreeForm, x)`.
+"""
+function filteredsurfacepoints end
+
+"""
+    featureradius()
+
+Return the radius of a [`IsPrimitive`](@ref) geometry
+that is subtype of [`AbstractHoleGeometry`].
+There is a default implementation that can be used: `featureradius(::IsPrimitive, x) = x.r`.
+"""
+function featureradius end
+
 featurepoint(x::T) where {T} = featurepoint(GeometryStyle(T), x)
 featurepoint(::IsPrimitive, x) = x.p
 function featurepoint(::IsFreeForm, x)
     error("Function `featurepoint` is not defined for `IsFreeForm`` features")
 end
 
-# Functions to be implemented to comply with the interface:
-# free form geometries have surfacepoints
-# return all points of a free form surface
+
 surfacepoints(x::T) where {T} = surfacepoints(GeometryStyle(T), x)
-#surfacepoints(::IsFreeForm, x) = x.p
 function surfacepoints(::IsPrimitive, x)
     error("Function `surfacepoints` is not defined for `IsFreeForm`` features")
 end
 
-# free form geometries have surfacepoints
-# return only those points, that may define active constraints
+
 filteredsurfacepoints(x::T) where {T} = filteredsurfacepoints(GeometryStyle(T), x)
 function filteredsurfacepoints(::IsPrimitive, x)
     error("Function `surfacepoints` is not defined for `IsPrimitive`` features")
 end
 
-# radius is only defined for hole like features that are IsPrimitive
 featureradius(x::T) where {T<:AbstractHoleGeometry} = featureradius(GeometryStyle(T), x)
 featureradius(::IsPrimitive, x) = x.r
 function featureradius(::IsFreeForm, x)
@@ -212,33 +245,37 @@ descriptor ([`FeatureDescriptor`](@ref)) and a rough and machined geometry
 The two geometries must be of same type (hole, plane, etc.).
 If a feature doesn't have a rough of machined state, an empty object should be used
 (and the feature descriptor should also store this information).
-A `LocalizationFeature` must define if it is [`IsPrimitive`](@ref) or [`IsFreeForm`](@ref)
 based on its rough geometry.
 """
 abstract type LocalizationFeature{R,M} end
-
-# I thought this should cover all subtypes, but it doesn't. But I don't know why
-#GeometryStyle(::Type{LocalizationFeature{R,M}}) where {R,M} = GeometryStyle(R)
 
 function Base.show(io::IO, lf::LocalizationFeature)
     print(io, typeof(lf), ": ", lf.descriptor.name)
 end
 
+"""
+    HoleLocalizationFeature(descriptor::FeatureDescriptor, rough::R, machined::M) where {R<:AbstractHoleGeometry,M<:AbstractHoleGeometry}
+
+A holelike localization feature. The rough and machined geometries don't necessarily
+have to be the same type.
+"""
 struct HoleLocalizationFeature{R<:AbstractHoleGeometry,M<:AbstractHoleGeometry} <: LocalizationFeature{R,M}
     descriptor::FeatureDescriptor
     rough::R
     machined::M
 end
 
-#GeometryStyle(::Type{HoleLocalizationFeature{R,M}}) where {R,M} = GeometryStyle(R)
+"""
+    PlaneLocalizationFeature(descriptor::FeatureDescriptor, rough::R, machined::M) where {R<:AbstractPlaneGeometry,M<:AbstractPlaneGeometry}
 
+A planelike localization feature. The rough and machined geometries don't necessarily
+have to be the same type.
+"""
 struct PlaneLocalizationFeature{R<:AbstractPlaneGeometry,M<:AbstractPlaneGeometry} <: LocalizationFeature{R,M}
     descriptor::FeatureDescriptor
     rough::R
     machined::M
 end
-
-#GeometryStyle(::Type{PlaneLocalizationFeature{R,M}}) where {R,M} = GeometryStyle(R)
 
 getfeaturename(f::LocalizationFeature) = getfeaturename(f.descriptor)
 getpartzero(f::LocalizationFeature) = getpartzero(f.descriptor)
