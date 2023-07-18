@@ -34,7 +34,8 @@ export  AbstractHoleGeometry,
         PlaneLocalizationFeature,
         OptimizationResult,
         Tolerance,
-        MultiOperationProblem
+        MultiOperationProblem,
+        setparameters!
 
 export  createjumpmodel,
         setjumpresult!,
