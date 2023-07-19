@@ -326,3 +326,39 @@ julia> printtolerancetable(mop)
 │    15 │ M righthole3 │     right │  M fronthole │     front │      0.0 │   -0.2 │    0.2 │  [-60.0, 38.0, 1.13687e-13] │ 1.13687e-13 │          0.0 % │
 └───────┴──────────────┴───────────┴──────────────┴───────────┴──────────┴────────┴────────┴─────────────────────────────┴─────────────┴────────────────┘
 ```
+
+## Visualizing the result
+
+For visualization the Meshes, MeshViz and Makie ecosystems are used.
+The idea is to "convert" the `BlankLocalizationCore` objects to Meshes objects, that can be then visualized with `MeshViz.viz!`.
+
+I wrote a small function that creates a `Makie.FigureAxisPlot`, which we can then use to plot into.
+Not that sophisticated I know.
+
+```julia
+using MeshViz
+import GLMakie
+
+using Meshes
+
+function initviz(;hideaxes=false)
+    f = viz([Point(i, j, k) for i in 0:1 for j in 0:1 for k in 0:1], size=0.01, color=:white)
+    if hideaxes
+        f.axis.show_axis[] = false
+    end
+    f
+end
+```
+
+Then, the with the following functions we can generate Meshes objects, then visualize them with the `viz` or `viz!` functions.
+
+```julia
+f = initviz(hideaxes=false)
+viz!.(rholes, alpha=0.5, color=:red)
+viz!.(mholes, alpha=0.5, color=:blue)
+viz!.(rplanes, alpha=0.5, color=:red)
+viz!.(mplanes, alpha=0.5, color=:blue)
+#GLMakie.save("example-part.png", f)
+```
+
+![Visualization with MeshViz](../assets/example-part-makie.png)
