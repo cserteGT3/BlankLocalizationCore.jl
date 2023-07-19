@@ -31,6 +31,13 @@ Our paper proposes a method, that ensures a proper machining allowance (minimum 
 
 The documentation goes through a detailed example of the process while showing how to use the package.
 
+The package is not yet registered, so it needs to be installed by its URL:
+
+```julia
+using Pkg
+Pkg.add(url="https://github.com/cserteGT3/BlankLocalizationCore.jl")
+```
+
 ## Acknowledgements
 
 This package couldn't have been created without the great people behind the following projects (as well as the whole Julia ecosystem):
