@@ -19,8 +19,6 @@ The documentation goes through a detailed example of the process while showing h
 
 ## Design goals
 
-_Note_: minimum required Julia version is 1.6 due to StaticArrays.jl dependency!
-
 This is a one on one implementation of the optimization model described in the above mentioned paper.
 As processing different types of measurement data (such as coordinate measurement machine, or a 3D scanner) requires different methods and techniqes, a well designed interface is available.
 The aim is to make it easy to adapt our methodology to any measurement types available.
@@ -38,3 +36,11 @@ If you use find this work useful, please cite our paper:
   doi = {10.1016/j.cirp.2023.04.049},
 }
 ```
+
+## Acknowledgements
+
+This package couldn't have been created without the great people behind the following projects (as well as the whole Julia ecosystem):
+
+* [Meshes.jl](https://github.com/JuliaGeometry/Meshes.jl), [MeshViz.jl](https://github.com/JuliaGeometry/MeshViz.jl) and the [Makie.jl](https://github.com/MakieOrg/Makie.jl) ecosystem
+* [JuMP.jl](https://jump.dev/)
+* [DataFrames.jl](https://github.com/JuliaData/DataFrames.jl) and [PrettyTables.jl](https://github.com/ronisbr/PrettyTables.jl)
