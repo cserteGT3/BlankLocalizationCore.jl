@@ -261,6 +261,8 @@ We need to load the JuMP package and also an optimizer.
 For the papers we used FICO Xpress, therefore here it will be used as well, thanks to the [Xpress.jl](https://github.com/jump-dev/Xpress.jl) package.
 Note that a licence is needed, however the generated problem size does not exceed the limit of the (free) community license.
 
+The [Ipopt](https://github.com/jump-dev/Ipopt.jl) and [SCIP](https://github.com/scipopt/SCIP.jl) solvers were also tested and can be used.
+
 ```julia
 ## Constructing and solving the optimization problem
 pard = Dict("minAllowance"=>0.5, "OptimizeForToleranceCenter"=>false, "UseTolerances"=>true);
