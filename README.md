@@ -51,3 +51,7 @@ This package couldn't have been created without the great people behind the foll
 * [Meshes.jl](https://github.com/JuliaGeometry/Meshes.jl), [MeshViz.jl](https://github.com/JuliaGeometry/MeshViz.jl) and the [Makie.jl](https://github.com/MakieOrg/Makie.jl) ecosystem
 * [JuMP.jl](https://jump.dev/)
 * [DataFrames.jl](https://github.com/JuliaData/DataFrames.jl) and [PrettyTables.jl](https://github.com/ronisbr/PrettyTables.jl)
+
+<!---
+To build the paper, use this site: https://whedon.theoj.org/
+--->
