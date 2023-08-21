@@ -1,21 +1,23 @@
-title: "My JuliaCon proceeding"
+title: "BlankLocalizationCore.jl: implementing blank localization in Julia"
 keywords:
   - Julia
   - Optimization
-  - Game theory
-  - Compiler
+  - Machining
+  - Blank localization
 authors:
-  - name: 1st author
-    orcid: 0000-0003-1361-440X
-    affiliation: 1
-  - name: 2nd author
+  - name: Tamás Cserteg
+    orcid: 0000-0002-8028-8061
     affiliation: 1, 2
-  - name: 3rd author
-    affiliation: 2
+  - name: András Kovács
+    affiliation: 1
+  - name: József Váncza
+    affiliation: 1, 3
 affiliations:
-  - name: University
+  - name: EPIC Centre of Excellence, Institute for Computer Science and Control (SZTAKI), Eötvös Loránd Research Network, Budapest H-1111, Hungary
     index: 1
-  - name: National Lab
+  - name: Doctoral School of Informatics, ELTE Eötvös Loránd University, Budapest  H-1117, Hungary
     index: 2
-date: 24 April 2019
+  - name: Department of Manufacturing Science and Technology, Budapest University of Technology and Economics, Budapest H-1111, Hungary
+    index: 3
+date: 21 August 2023
 bibliography: ref.bib
