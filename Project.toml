@@ -16,7 +16,7 @@ Rotations = "6038ab10-8711-5258-84ad-4b1120ba62dc"
 [compat]
 DataFrames = "1"
 JuMP = "1.4"
-Meshes = "0.32"
+Meshes = "0.34"
 PrettyTables = "2"
 julia = "1.6"
 Rotations = "1.5"
