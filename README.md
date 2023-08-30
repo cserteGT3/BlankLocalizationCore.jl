@@ -20,9 +20,11 @@ The documentation goes through a detailed example of the process while showing h
 The package is registered in the general registry, so it can be installed via running:
 
 ```julia
-]
-add BlankLocalizationCore
+] add BlankLocalizationCore
 ```
+
+Note, that at least Julia 1.9 is required.
+If you are interested in using the package with older versions, please open an issue!
 
 ## Design goals
 

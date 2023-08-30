@@ -18,7 +18,7 @@ DataFrames = "1"
 JuMP = "1.4"
 Meshes = "0.34"
 PrettyTables = "2"
-julia = "1.6"
+julia = "1.9"
 Rotations = "1.5"
 
 [extras]
