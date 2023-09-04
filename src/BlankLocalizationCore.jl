@@ -65,5 +65,6 @@ include("geometries.jl")
 include("optimization.jl")
 include("resultevaluation.jl")
 include("visualization.jl")
+include("moselcompat.jl")
 
 end
