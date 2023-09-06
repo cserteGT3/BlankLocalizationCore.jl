@@ -332,7 +332,7 @@ mutable struct MultiOperationProblem
     holes::Vector{HoleLocalizationFeature}
     planes::Vector{PlaneLocalizationFeature}
     tolerances::Vector{Tolerance}
-    parameters::Dict{String,Real}
+    parameters::Dict{String,Any}
     opresult::OptimizationResult
 end
 

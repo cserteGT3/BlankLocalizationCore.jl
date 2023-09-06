@@ -46,7 +46,7 @@ pzb = PartZero("back", [0,0,0], hcat([0, -1, 0], [0, 0, 1], [-1, 0, 0]))
 partzeros = [pzf, pzr, pzb]
 ```
 
-When constructing a part zero, a default `[0,0,0]` positions is set, as the goal of the optimization process is to find the values of those positions.
+When constructing a part zero, a default `[0,0,0]` position is set, as the goal of the optimization process is to find the values of those position.
 For more details see the docs of [`PartZero`](@ref).
 
 ## Machined features
@@ -252,10 +252,11 @@ A few parameters are needed for the optimization problem, passed to the object a
 These are:
 
 | Name (key) | Description | Suggested value | Required? |
-| --- | ---  | --- | --- |
+| :--- | :---  | --- | --- |
 | minAllowance | Minimum allowance that must be achieved even by the lowest value. | `0.1` | Required |
 | OptimizeForToleranceCenter | The default method is to optimize for the middle (center) of the tolerance fields. For debugging, one can set it to `false`, then the minimum allowance will be maximised (ignoring the `minAllowance` value). | `true` | Required |
 | UseTolerances | Also a debugging feature. Tolerance lower-upper values are added as active constraints on the distance of the corresponding features. This can be turned off with this flag. | `true` | Required |
+| SetPartZeroPosition | The position of each part zero can be set with this option. A vector of 3 long vectors is expected, that is matched with the number of part zeros. Empty vectors can be passed, if not all part zero positions should be set. For example setting this option to `[[], [], []]` for three part zeros will have no effect. `NaN` elements are ignored, which means that specific axes of part zeros can be set. For example `[[NaN, 150, Nan], [], []]` would only set the value of the Y axis of the first part zero, all others are unaffected. | | Optional |
 
 We need to load the JuMP package and also an optimizer.
 For the papers we used FICO Xpress, therefore here it will be used as well, thanks to the [Xpress.jl](https://github.com/jump-dev/Xpress.jl) package.
