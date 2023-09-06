@@ -34,9 +34,10 @@ The documentation goes through a detailed example of the process while showing h
 The package is registered in the general registry, so it can be installed via running:
 
 ```julia
-]
-add BlankLocalizationCore
+] add BlankLocalizationCore
 ```
+
+For the exaplanation on how the package works, please read through the [Example](@ref) page.
 
 ## Acknowledgements
 

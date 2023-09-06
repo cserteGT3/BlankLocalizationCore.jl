@@ -23,6 +23,8 @@ The package is registered in the general registry, so it can be installed via ru
 ] add BlankLocalizationCore
 ```
 
+For the exaplanation on how the package works, please read through the [Example](https://csertegt3.github.io/BlankLocalizationCore.jl/stable/example/) page of the documentation.
+
 Note, that at least Julia 1.9 is required.
 If you are interested in using the package with older versions, please open an issue!
 
