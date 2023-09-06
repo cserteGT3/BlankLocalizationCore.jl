@@ -42,8 +42,10 @@ export  createjumpmodel,
         optimizeproblem!
 
 export  allowancetable,
+        minimumallowance,
         printallowancetable,
         tolerancetable,
+        toleranceerror,
         printtolerancetable
 
 export  genroughholes,
