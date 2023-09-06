@@ -58,7 +58,7 @@ function transformmachinedgeoms(lf::LocalizationFeature)
     R = pz.rotation
     rot = RotMatrix{3}(R)
     # again, I'm not sure about why the inverse...
-    fr = Rotate(inv(rot))
+    fr = Rotate(rot)
     ft = Translate(pz.position...)
     geom = visualizationgeometry(lf.machined)
     geom2 = fr(geom)

@@ -184,6 +184,27 @@ function createjumpmodel(mop::MultiOperationProblem, optimizer; disable_string_n
         @objective(model, Max, minAllowance)
     end
 
+    # set part zeros if option is provided
+    if haskey(mop.parameters, "SetPartZeroPosition")
+        predef_partzeros = mop.parameters["SetPartZeroPosition"]
+        lpz = length(mop.partzeros)
+        lpdz = length(predef_partzeros)
+        if lpz == lpdz
+            # for each part zero
+            for i in pzr
+                # ignore elements that are empty
+                ith_pzpose = predef_partzeros[i]
+                isempty(ith_pzpose) && continue
+                for j in 1:3
+                    isnan(ith_pzpose[j]) && continue
+                    @constraint(model, pzpose[i, j] == ith_pzpose[j])
+                end
+            end
+        else
+            throw(DimensionMismatch("Length of `SetPartZeroPosition` ($lpdz) does not match number of part zeros ($lpz)!"))
+        end
+    end
+
     return model
 end
 

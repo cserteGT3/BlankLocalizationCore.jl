@@ -104,6 +104,11 @@ function computeallowance(::IsFreeForm, plane::PlaneLocalizationFeature)
         zdistance = zdist, axallowance = axallowance)
 end
 
+"""
+    allowancetable(mop::MultiOperationProblem)
+
+Generate the allowance table for a given `mop` to examine the allowance for each feature.
+"""
 function allowancetable(mop::MultiOperationProblem)
     df = DataFrame(name=String[], partzeroname=String[], machinedx=FON[], machinedy=FON[],
         machinedz=FON[], roughx=FON[], roughy=FON[], roughz=FON[], machinedr=FON[],
@@ -138,6 +143,20 @@ function allowancetable(mop::MultiOperationProblem)
     return df
 end
 
+"""
+    minimumallowance(mop::MultiOperationProblem)
+
+Calculate the minimum allowances (radial and axial) for the given `mop`.
+Calls [`allowancetable`](@ref) under the hood.
+"""
+minimumallowance(mop::MultiOperationProblem) = minimumallowance(allowancetable(mop))
+
+"""
+    minimumallowance(allowancedb)
+
+Calculate the minimum allowances (radial and axial) for the given allowance database
+(computed by [`allowancetable`](@ref)).
+"""
 function minimumallowance(allowancedb)
     radial = minimum(filter(x->!isnothing(x), allowancedb.rallowance))
     axial = minimum(filter(x->!isnothing(x), allowancedb.axallowance))
@@ -173,6 +192,11 @@ function printallowancetable(df::DataFrame; title = "", printstat=true, fname=""
 
 end
 
+"""
+    tolerancetable(mop::MultiOperationProblem)
+
+Generate the tolerance table for a given `mop` to examine the tolerances.
+"""
 function tolerancetable(mop::MultiOperationProblem)
     """modify a tolerance's names based on if the features are rough or machined"""
     function fnameplusrORm(t)
@@ -206,7 +230,23 @@ function tolerancetable(mop::MultiOperationProblem)
     return df
 end
 
-function avgreltolerror(tolerancedb)
+"""
+    toleranceerror(mop::MultiOperationProblem)
+
+Calculate the average relative tolerance error for the given `mop`.
+Calls [`tolerancetable`](@ref) under the hood.
+Gives the result in the 0-100 % range.
+"""
+toleranceerror(mop::MultiOperationProblem) = toleranceerror(tolerancetable(mop))
+
+"""
+    toleranceerror(tolerancedb)
+
+Calculate the average relative tolerance error for the given tolerance database
+(computed by [`tolerancetable`](@ref)).
+Gives the result in the 0-100 % range.
+"""
+function toleranceerror(tolerancedb)
     return sum(abs.(tolerancedb.tolerancefield))/nrow(tolerancedb)
 end
 
@@ -229,7 +269,7 @@ function printtolerancetable(df::DataFrame; title = "", printstat=true, fname=""
     end
     if printstat
         newtitle = string("Tolerance table", title, " avgabsreltolerror: ",
-        @sprintf("%.1f", avgreltolerror(df)), "%")
+        @sprintf("%.1f", toleranceerror(df)), "%")
     else
         newtitle = string("Tolerance table", title)
     end
