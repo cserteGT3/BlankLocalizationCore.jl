@@ -467,3 +467,22 @@ collectroughholes(mop::MultiOperationProblem) = filter(hasrough, mop.holes)
 Collect those planes, that have rough stage.
 """
 collectroughplanes(mop::MultiOperationProblem) = filter(hasrough, mop.planes)
+
+
+"""
+    collectallowancedholes(mop::MultiOperationProblem)
+
+Collect holes that have machined and rough states, thus allowance should be calculated for.
+"""
+function collectallowancedholes(mop::MultiOperationProblem)
+    return [h for h in mop.holes if hasmachined(h) & hasrough(h)]
+end
+
+"""
+    collectallowancedplanes(mop::MultiOperationProblem)
+
+Collect planes that have machined and rough states, thus allowance should be calculated for.
+"""
+function collectallowancedplanes(mop::MultiOperationProblem)
+    return [p for p in mop.planes if hasmachined(p) & hasrough(p)]
+end

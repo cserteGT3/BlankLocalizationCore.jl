@@ -156,9 +156,9 @@ function createjumpmodel(mop::MultiOperationProblem, optimizer; disable_string_n
     pzmatricedict = Dict([(partzeros[i].name, pzmatrices[i]) for i in pzr])
 
     # holes that have machined state
-    machinedholes = collectmachinedholes(mop)
+    machinedholes = collectallowancedholes(mop)
     # planes that have machined state
-    machinedplanes = collectmachinedplanes(mop)
+    machinedplanes = collectallowancedplanes(mop)
     # numer of tolerances
     ntolerances = length(mop.tolerances)
     
