@@ -57,6 +57,7 @@ end
 function addplane2model!(::IsPrimitive, model, plane, ipzmatricedict)
     # access registered variables
     minAllowance = model[:minAllowance]
+    maxPlaneZAllowance = model[:maxPlaneZAllowance]
 
     # register distance variable:
     dz = @variable(model, base_name = string("d_z_", getfeaturename(plane)))
@@ -69,12 +70,14 @@ function addplane2model!(::IsPrimitive, model, plane, ipzmatricedict)
     @constraint(model, dz == d_f[3])
     # equation (7)
     @constraint(model, -1*dz >= minAllowance)
+    @constraint(model, -1*dz <= maxPlaneZAllowance)
     return model
 end
 
 function addplane2model!(::IsFreeForm, model, plane, ipzmatricedict)
     # access registered variables
     minAllowance = model[:minAllowance]
+    maxPlaneZAllowance = model[:maxPlaneZAllowance]
 
     # filtered surface points of a free form surface
     qs = getroughfilteredpoints(plane)
@@ -92,6 +95,7 @@ function addplane2model!(::IsFreeForm, model, plane, ipzmatricedict)
         @constraint(model, dz[i] == d_f[3])
         # equation (6)
         @constraint(model, -1*dz[i] >= minAllowance)
+        @constraint(model, -1*dz[i] <= maxPlaneZAllowance)
     end
     return model
 end
@@ -163,6 +167,8 @@ function createjumpmodel(mop::MultiOperationProblem, optimizer; disable_string_n
     # variable for minimum allowance
     #@variable(model, minAllowance >= 0)
     @variable(model, minAllowance)
+    # variable for maximum allowance for planes
+    @variable(model, maxPlaneZAllowance)
 
     ## tolerances
     addtolerances2model!(model, mop, pzmatricedict)
@@ -174,6 +180,10 @@ function createjumpmodel(mop::MultiOperationProblem, optimizer; disable_string_n
     # allowance for planes
     for p in machinedplanes
         addplane2model!(model, p, ipzmatricedict)
+    end
+    # if maximum allowance of planes is given, then set it
+    if haskey(mop.parameters, "maxPlaneZAllowance")
+        @constraint(model, maxPlaneZAllowance == mop.parameters["maxPlaneZAllowance"])
     end
 
     # optimization
@@ -210,7 +220,8 @@ end
 
 function setjumpresult!(mop::MultiOperationProblem, jump_model)
     status = termination_status(jump_model)
-    if status != TerminationStatusCode(1)
+    if (status != OPTIMAL) & (status != LOCALLY_SOLVED)
+        mop.opresult = OptimizationResult(string(status), NaN)
         @warn "Optimization did not find optimum! Ignoring result. Status: $status"
         return mop
     end
@@ -220,7 +231,7 @@ function setjumpresult!(mop::MultiOperationProblem, jump_model)
             pz.position[j] = jump_result[i, j]
         end
     end
-    jump_status = string(termination_status(jump_model))
+    jump_status = string(status)
     jump_minallowance = value(jump_model[:minAllowance])
     or = OptimizationResult(jump_status, jump_minallowance)
     mop.opresult = or

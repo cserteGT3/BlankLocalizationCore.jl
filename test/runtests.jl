@@ -1,6 +1,11 @@
 using BlankLocalizationCore
 using Test
 
-@testset "BlankLocalizationCore.jl" begin
-    # Write your tests here.
-end
+using Meshes
+using Ipopt
+
+const BLC = BlankLocalizationCore
+
+include("partzeros.jl")
+include("geometries.jl")
+include("testproblem.jl")
