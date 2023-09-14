@@ -7,3 +7,4 @@ using Ipopt
 const BLC = BlankLocalizationCore
 
 include("partzeros.jl")
+include("geometries.jl")
