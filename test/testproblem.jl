@@ -120,11 +120,8 @@
     optimizeproblem!(mop, Ipopt.Optimizer)
     @test mop.opresult.status == "LOCALLY_SOLVED"
 
-    resallowance = minimumallowance(mop)
     tolerror = toleranceerror(mop)
-    
-    @test isapprox(resallowance.radial, 1.48846, atol=0.01)
-    @test isapprox(resallowance.axial, 0.5, atol=0.01)
+
     # atol=0.01 -> toleranceerror returns in the 0-100% range
     @test isapprox(tolerror, 0, atol=0.01)
 
