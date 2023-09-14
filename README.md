@@ -16,7 +16,7 @@ When doing so, one must consider two important factors:
 
 Our paper proposes a method, that ensures a proper machining allowance (minimum requirement), while trying to optimize to the center of the tolerance fields between features.
 
-## Installation and usafe
+## Installation and usage
 
 The package is registered in the general registry, so it can be installed via running:
 
