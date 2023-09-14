@@ -327,6 +327,12 @@ struct Tolerance
     note::String
 end
 
+"""
+    MultiOperationProblem
+
+Collect all data for a multi operation problem, including: part zeros, holes, planes,
+tolerances, parameters and optimization result.
+"""
 mutable struct MultiOperationProblem
     partzeros::Vector{PartZero}
     holes::Vector{HoleLocalizationFeature}
@@ -336,6 +342,23 @@ mutable struct MultiOperationProblem
     opresult::OptimizationResult
 end
 
+"""
+    MultiOperationProblem(partzeros, holes, planes, tolerances, parameters)
+
+Construct a multi operation problem.
+For usage, please see the example section in the documentation.
+The parameters for the optimization are also described there with greater details.
+
+# Arguments
+
+- `partzeros::Vector{PartZero}`: array of part zeros.
+- `holes::Vector{HoleLocalizationFeature}`: array of holes.
+- `planes::Vector{PlaneLocalizationFeature}`: array of planes.
+- `tolerances::Vector{Tolerance}`: array of tolerances.
+- `parameters::Dict{String,Any}`: parameters in the form of a dictionary. Keys include:
+    `minAllowance`, `OptimizeForToleranceCenter`, `UseTolerances`,
+    `SetPartZeroPosition`, `maxPlaneZAllowance`.
+"""
 function MultiOperationProblem(partzeros, holes, planes, tolerances, parameters)
     return MultiOperationProblem(partzeros, holes, planes, tolerances, parameters, emptyor())
 end
