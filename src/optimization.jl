@@ -211,6 +211,7 @@ end
 function setjumpresult!(mop::MultiOperationProblem, jump_model)
     status = termination_status(jump_model)
     if status != TerminationStatusCode(1)
+        mop.opresult = OptimizationResult(string(status), NaN)
         @warn "Optimization did not find optimum! Ignoring result. Status: $status"
         return mop
     end
@@ -220,7 +221,7 @@ function setjumpresult!(mop::MultiOperationProblem, jump_model)
             pz.position[j] = jump_result[i, j]
         end
     end
-    jump_status = string(termination_status(jump_model))
+    jump_status = string(status)
     jump_minallowance = value(jump_model[:minAllowance])
     or = OptimizationResult(jump_status, jump_minallowance)
     mop.opresult = or
