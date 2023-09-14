@@ -257,6 +257,7 @@ These are:
 | OptimizeForToleranceCenter | The default method is to optimize for the middle (center) of the tolerance fields. For debugging, one can set it to `false`, then the minimum allowance will be maximised (ignoring the `minAllowance` value). | `true` | Required |
 | UseTolerances | Also a debugging feature. Tolerance lower-upper values are added as active constraints on the distance of the corresponding features. This can be turned off with this flag. | `true` | Required |
 | SetPartZeroPosition | The position of each part zero can be set with this option. A vector of 3 long vectors is expected, that is matched with the number of part zeros. Empty vectors can be passed, if not all part zero positions should be set. For example setting this option to `[[], [], []]` for three part zeros will have no effect. `NaN` elements are ignored, which means that specific axes of part zeros can be set. For example `[[NaN, 150, Nan], [], []]` would only set the value of the Y axis of the first part zero, all others are unaffected. | | Optional |
+| maxPlaneZAllowance | The allowance has no upper bound by default. For planes, it is possible to set an upper bound to avoid the issue of "machining the whole part away". | | Optional |
 
 We need to load the JuMP package and also an optimizer.
 For the papers we used FICO Xpress, therefore here it will be used as well, thanks to the [Xpress.jl](https://github.com/jump-dev/Xpress.jl) package.
@@ -266,7 +267,8 @@ The [Ipopt](https://github.com/jump-dev/Ipopt.jl) and [SCIP](https://github.com/
 
 ```julia
 ## Constructing and solving the optimization problem
-pard = Dict("minAllowance"=>0.5, "OptimizeForToleranceCenter"=>false, "UseTolerances"=>true);
+pard = Dict("minAllowance"=>0.5, "OptimizeForToleranceCenter"=>true,
+    "UseTolerances"=>true, "maxPlaneZAllowance"=>1);
 
 mop = MultiOperationProblem(partzeros, holes, planes, tolerances, pard)
 
@@ -293,41 +295,41 @@ julia> printallowancetable(mop)
 ┌────────────┬──────────────┬───────────┬───────────┬───────────┬────────┬────────┬────────┬───────────┬────────┬────────────┬───────────┬────────────┬─────────────┐
 │       name │ partzeroname │ machinedx │ machinedy │ machinedz │ roughx │ roughy │ roughz │ machinedr │ roughr │ xydistance │ zdistance │ rallowance │ axallowance │
 ├────────────┼──────────────┼───────────┼───────────┼───────────┼────────┼────────┼────────┼───────────┼────────┼────────────┼───────────┼────────────┼─────────────┤
-│  fronthole │        front │      82.0 │   29.4474 │   39.9856 │   82.5 │   30.0 │   40.0 │      29.0 │   26.0 │   0.552773 │           │    2.44723 │             │
-│ righthole1 │        right │      66.0 │   70.4474 │   54.9856 │   66.0 │   71.5 │   55.0 │       7.5 │    6.0 │  0.0143979 │           │     1.4856 │             │
-│ righthole2 │        right │      57.0 │   73.4474 │   23.9856 │   58.0 │   74.5 │   24.0 │       9.0 │  4.905 │     1.0001 │           │     3.0949 │             │
-│ righthole3 │        right │      22.0 │   67.4474 │   39.9856 │   21.5 │   68.5 │   40.0 │      13.5 │    8.0 │   0.500207 │           │    4.99979 │             │
-│  backhole1 │         back │      -2.5 │   43.4474 │   53.9856 │   -3.0 │   44.0 │   53.9 │       9.0 │    6.2 │   0.559177 │           │    2.24082 │             │
-│  backhole2 │         back │      -2.5 │   15.4474 │   53.9856 │   -3.0 │   16.1 │   54.0 │       9.0 │   6.25 │   0.652744 │           │    2.09726 │             │
-│  frontface │        front │      82.0 │   29.4474 │   39.9856 │   82.5 │   30.0 │   40.0 │           │        │            │      -0.5 │            │         0.5 │
-│ rightface1 │        right │      66.0 │   70.4474 │   54.9856 │   66.0 │   71.5 │   55.0 │           │        │            │  -1.05259 │            │     1.05259 │
-│ rightface2 │        right │      57.0 │   73.4474 │   23.9856 │   58.0 │   74.5 │   24.0 │           │        │            │  -1.05259 │            │     1.05259 │
-│ rightface3 │        right │      22.0 │   67.4474 │   39.9856 │   21.5 │   68.5 │   40.0 │           │        │            │  -1.05259 │            │     1.05259 │
-│  backface1 │         back │      -2.5 │   43.4474 │   53.9856 │   -3.0 │   44.0 │   54.0 │           │        │            │      -0.5 │            │         0.5 │
-│  backface2 │         back │      -2.5 │   15.4474 │   53.9856 │   -3.0 │   16.0 │   54.0 │           │        │            │      -0.5 │            │         0.5 │
+│  fronthole │        front │      82.0 │   29.7785 │    39.986 │   82.5 │   30.0 │   40.0 │      29.0 │   26.0 │   0.221918 │           │    2.77808 │             │
+│ righthole1 │        right │      66.0 │   70.7785 │    54.986 │   66.0 │   71.5 │   55.0 │       7.5 │    6.0 │   0.014046 │           │    1.48595 │             │
+│ righthole2 │        right │      57.0 │   73.7785 │    23.986 │   58.0 │   74.5 │   24.0 │       9.0 │  4.905 │     1.0001 │           │     3.0949 │             │
+│ righthole3 │        right │      22.0 │   67.7785 │    39.986 │   21.5 │   68.5 │   40.0 │      13.5 │    8.0 │   0.500197 │           │     4.9998 │             │
+│  backhole1 │         back │      -2.5 │   43.7785 │    53.986 │   -3.0 │   44.0 │   53.9 │       9.0 │    6.2 │   0.237568 │           │    2.56243 │             │
+│  backhole2 │         back │      -2.5 │   15.7785 │    53.986 │   -3.0 │   16.1 │   54.0 │       9.0 │   6.25 │    0.32178 │           │    2.42822 │             │
+│  frontface │        front │      82.0 │   29.7785 │    39.986 │   82.5 │   30.0 │   40.0 │           │        │            │      -0.5 │            │         0.5 │
+│ rightface1 │        right │      66.0 │   70.7785 │    54.986 │   66.0 │   71.5 │   55.0 │           │        │            │ -0.721473 │            │    0.721473 │
+│ rightface2 │        right │      57.0 │   73.7785 │    23.986 │   58.0 │   74.5 │   24.0 │           │        │            │ -0.721473 │            │    0.721473 │
+│ rightface3 │        right │      22.0 │   67.7785 │    39.986 │   21.5 │   68.5 │   40.0 │           │        │            │ -0.721473 │            │    0.721473 │
+│  backface1 │         back │      -2.5 │   43.7785 │    53.986 │   -3.0 │   44.0 │   54.0 │           │        │            │      -0.5 │            │         0.5 │
+│  backface2 │         back │      -2.5 │   15.7785 │    53.986 │   -3.0 │   16.0 │   54.0 │           │        │            │      -0.5 │            │         0.5 │
 └────────────┴──────────────┴───────────┴───────────┴───────────┴────────┴────────┴────────┴───────────┴────────┴────────────┴───────────┴────────────┴─────────────┘
 
 julia> printtolerancetable(mop)
-                                                         Tolerance table avgabsreltolerror: 0.0%
-┌───────┬──────────────┬───────────┬──────────────┬───────────┬──────────┬────────┬────────┬─────────────────────────────┬─────────────┬────────────────┐
-│ Tol # │     feature1 │ partzero1 │     feature2 │ partzero2 │ nominald │ lowerd │ upperd │                    distance │       reald │ tolerancefield │
-├───────┼──────────────┼───────────┼──────────────┼───────────┼──────────┼────────┼────────┼─────────────────────────────┼─────────────┼────────────────┤
-│     1 │ M rightface1 │     right │  M fronthole │     front │     41.0 │   40.7 │   41.3 │         [-16.0, 41.0, 15.0] │        41.0 │         -0.0 % │
-│     2 │  M backhole1 │      back │  M fronthole │     front │     14.0 │   13.8 │   14.2 │         [-84.5, 14.0, 14.0] │        14.0 │         -0.0 % │
-│     3 │  M fronthole │     front │  M backhole2 │      back │     14.0 │   13.8 │   14.2 │         [84.5, 14.0, -14.0] │        14.0 │          0.0 % │
-│     4 │  M backhole1 │      back │  M fronthole │     front │     14.0 │   13.8 │   14.2 │         [-84.5, 14.0, 14.0] │        14.0 │         -0.0 % │
-│     5 │  M backhole2 │      back │  M fronthole │     front │     14.0 │   13.8 │   14.2 │        [-84.5, -14.0, 14.0] │        14.0 │         -0.0 % │
-│     6 │ M rightface3 │     right │  M fronthole │     front │     38.0 │   37.7 │   38.3 │  [-60.0, 38.0, 1.13687e-13] │        38.0 │         -0.0 % │
-│     7 │ M rightface2 │     right │  M fronthole │     front │     44.0 │   43.7 │   44.3 │        [-25.0, 44.0, -16.0] │        44.0 │         -0.0 % │
-│     8 │  M frontface │     front │ M righthole3 │     right │     60.0 │   59.7 │   60.3 │ [60.0, -38.0, -1.13687e-13] │        60.0 │          0.0 % │
-│     9 │  M frontface │     front │ M righthole2 │     right │     25.0 │   24.8 │   25.2 │         [25.0, -44.0, 16.0] │        25.0 │          0.0 % │
-│    10 │  M frontface │     front │ M righthole1 │     right │     16.0 │   15.8 │   16.2 │        [16.0, -41.0, -15.0] │        16.0 │          0.0 % │
-│    11 │ M righthole1 │     right │  M fronthole │     front │     15.0 │   14.8 │   15.2 │         [-16.0, 41.0, 15.0] │        15.0 │          0.0 % │
-│    12 │  M fronthole │     front │ M righthole2 │     right │     16.0 │   15.8 │   16.2 │         [25.0, -44.0, 16.0] │        16.0 │         -0.0 % │
-│    13 │  M frontface │     front │  R backface1 │      back │     85.0 │   84.6 │   85.4 │  [85.0, -14.5526, -14.0144] │        85.0 │          0.0 % │
-│    14 │  M frontface │     front │  R backface2 │      back │     85.0 │   84.6 │   85.4 │   [85.0, 13.4474, -14.0144] │        85.0 │          0.0 % │
-│    15 │ M righthole3 │     right │  M fronthole │     front │      0.0 │   -0.2 │    0.2 │  [-60.0, 38.0, 1.13687e-13] │ 1.13687e-13 │          0.0 % │
-└───────┴──────────────┴───────────┴──────────────┴───────────┴──────────┴────────┴────────┴─────────────────────────────┴─────────────┴────────────────┘
+                                                        Tolerance table avgabsreltolerror: 0.0%
+┌───────┬──────────────┬───────────┬──────────────┬───────────┬──────────┬────────┬────────┬────────────────────────────┬────────────┬────────────────┐
+│ Tol # │     feature1 │ partzero1 │     feature2 │ partzero2 │ nominald │ lowerd │ upperd │                   distance │      reald │ tolerancefield │
+├───────┼──────────────┼───────────┼──────────────┼───────────┼──────────┼────────┼────────┼────────────────────────────┼────────────┼────────────────┤
+│     1 │ M rightface1 │     right │  M fronthole │     front │     41.0 │   40.7 │   41.3 │        [-16.0, 41.0, 15.0] │       41.0 │          0.0 % │
+│     2 │  M backhole1 │      back │  M fronthole │     front │     14.0 │   13.8 │   14.2 │        [-84.5, 14.0, 14.0] │       14.0 │          0.0 % │
+│     3 │  M fronthole │     front │  M backhole2 │      back │     14.0 │   13.8 │   14.2 │        [84.5, 14.0, -14.0] │       14.0 │         -0.0 % │
+│     4 │  M backhole1 │      back │  M fronthole │     front │     14.0 │   13.8 │   14.2 │        [-84.5, 14.0, 14.0] │       14.0 │         -0.0 % │
+│     5 │  M backhole2 │      back │  M fronthole │     front │     14.0 │   13.8 │   14.2 │       [-84.5, -14.0, 14.0] │       14.0 │         -0.0 % │
+│     6 │ M rightface3 │     right │  M fronthole │     front │     38.0 │   37.7 │   38.3 │  [-60.0, 38.0, 9.9476e-14] │       38.0 │          0.0 % │
+│     7 │ M rightface2 │     right │  M fronthole │     front │     44.0 │   43.7 │   44.3 │       [-25.0, 44.0, -16.0] │       44.0 │          0.0 % │
+│     8 │  M frontface │     front │ M righthole3 │     right │     60.0 │   59.7 │   60.3 │ [60.0, -38.0, -9.9476e-14] │       60.0 │          0.0 % │
+│     9 │  M frontface │     front │ M righthole2 │     right │     25.0 │   24.8 │   25.2 │        [25.0, -44.0, 16.0] │       25.0 │          0.0 % │
+│    10 │  M frontface │     front │ M righthole1 │     right │     16.0 │   15.8 │   16.2 │       [16.0, -41.0, -15.0] │       16.0 │          0.0 % │
+│    11 │ M righthole1 │     right │  M fronthole │     front │     15.0 │   14.8 │   15.2 │        [-16.0, 41.0, 15.0] │       15.0 │          0.0 % │
+│    12 │  M fronthole │     front │ M righthole2 │     right │     16.0 │   15.8 │   16.2 │        [25.0, -44.0, 16.0] │       16.0 │         -0.0 % │
+│    13 │  M frontface │     front │  R backface1 │      back │     85.0 │   84.6 │   85.4 │  [85.0, -14.2215, -14.014] │       85.0 │          0.0 % │
+│    14 │  M frontface │     front │  R backface2 │      back │     85.0 │   84.6 │   85.4 │   [85.0, 13.7785, -14.014] │       85.0 │          0.0 % │
+│    15 │ M righthole3 │     right │  M fronthole │     front │      0.0 │   -0.2 │    0.2 │  [-60.0, 38.0, 9.9476e-14] │ 9.9476e-14 │          0.0 % │
+└───────┴──────────────┴───────────┴──────────────┴───────────┴──────────┴────────┴────────┴────────────────────────────┴────────────┴────────────────┘
 ```
 
 ## Visualizing the result
