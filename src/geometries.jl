@@ -277,6 +277,24 @@ struct PlaneLocalizationFeature{R<:AbstractPlaneGeometry,M<:AbstractPlaneGeometr
     machined::M
 end
 
+"""
+    localizationfeature(descriptor::FeatureDescriptor, rough::AbstractHoleGeometry, machined::AbstractHoleGeometry)
+
+Convenience constructor for [`HoleLocalizationFeature`](@ref).
+"""
+function localizationfeature(descriptor, rough::AbstractHoleGeometry, machined::AbstractHoleGeometry)
+    return HoleLocalizationFeature(descriptor, rough, machined)
+end
+
+"""
+    localizationfeature(descriptor::FeatureDescriptor, rough::AbstractPlaneGeometry, machined::AbstractPlaneGeometry)
+
+Convenience constructor for [`PlaneLocalizationFeature`](@ref).
+"""
+function localizationfeature(descriptor, rough::AbstractPlaneGeometry, machined::AbstractPlaneGeometry)
+    return PlaneLocalizationFeature(descriptor, rough, machined)
+end
+
 getfeaturename(f::LocalizationFeature) = getfeaturename(f.descriptor)
 getpartzero(f::LocalizationFeature) = getpartzero(f.descriptor)
 getpartzeroname(f::LocalizationFeature) = getpartzeroname(f.descriptor)
