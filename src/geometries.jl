@@ -112,12 +112,7 @@ GeometryStyle(::Type{SimpleHole}) = IsPrimitive()
 function visualizationgeometry(hole::SimpleHole)
     # p1: feature point
     p1 = Point3(hole.p)
-    # p2: deeper in the hole
-    p2 = p1 - Vec3(0,0,0.01)
-    ax = Vec3(0,0,1)
-    bottom = Plane(p2, ax)
-    top = Plane(p1, ax)
-    return Cylinder(bottom, top, hole.r)
+    return Disk(Plane(p1, Vec3(0,0,1)), hole.r)
 end
 
 """
