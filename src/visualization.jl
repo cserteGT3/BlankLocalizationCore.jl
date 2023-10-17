@@ -7,7 +7,6 @@ function transformmachinedgeoms(lf::LocalizationFeature)
     pz = getpartzero(lf)
     R = pz.rotation
     rot = RotMatrix{3}(R)
-    # again, I'm not sure about why the inverse...
     fr = Rotate(rot)
     ft = Translate(pz.position...)
     geom = visualizationgeometry(lf.machined)
@@ -22,7 +21,22 @@ Generate Meshes object for each machined hole.
 """
 function genmachinedholes(mop::MultiOperationProblem)
     holes = collectmachinedholes(mop)
-    return [transformmachinedgeoms(h) for h in holes]
+    # reimplement transformmachinedgeoms, because:
+    # https://github.com/JuliaGeometry/Meshes.jl/issues/622
+    disks = Disk[]
+    for h in holes
+        pz = getpartzero(h)
+        R = pz.rotation
+        rot = RotMatrix{3}(R)
+        fr = Rotate(rot)
+        ft = Translate(pz.position...)
+        geom = visualizationgeometry(h.machined)
+        rotg = fr(geom)
+        trg = ft(rotg)
+        finalg = Disk(Plane(trg.plane.p, rotg.plane.u, rotg.plane.v), trg.radius)
+        push!(disks, finalg)
+    end
+    return disks
 end
 
 """
