@@ -362,6 +362,11 @@ end
 Then, the with the following functions we can generate Meshes objects, then visualize them with the `viz` or `viz!` functions.
 
 ```julia
+rholes = genroughholes(mop)
+mholes = genmachinedholes(mop)
+mplanes = genmachinedplanes(mop)
+rplanes = genroughplanes(mop)
+
 f = initviz(hideaxes=false)
 viz!.(rholes, alpha=0.5, color=:red)
 viz!.(mholes, alpha=0.5, color=:blue)
