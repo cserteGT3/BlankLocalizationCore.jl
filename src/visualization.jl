@@ -4,6 +4,8 @@
 Get the rough state of `lf` and transform it according to its current part zero transformation.
 """
 function transformmachinedgeoms(lf::LocalizationFeature)
+    # for properly working, needs this to be merged:
+    # https://github.com/JuliaGeometry/Meshes.jl/pull/623
     pz = getpartzero(lf)
     R = pz.rotation
     rot = RotMatrix{3}(R)
@@ -21,22 +23,7 @@ Generate Meshes object for each machined hole.
 """
 function genmachinedholes(mop::MultiOperationProblem)
     holes = collectmachinedholes(mop)
-    # reimplement transformmachinedgeoms, because:
-    # https://github.com/JuliaGeometry/Meshes.jl/issues/622
-    disks = Disk[]
-    for h in holes
-        pz = getpartzero(h)
-        R = pz.rotation
-        rot = RotMatrix{3}(R)
-        fr = Rotate(rot)
-        ft = Translate(pz.position...)
-        geom = visualizationgeometry(h.machined)
-        rotg = fr(geom)
-        trg = ft(rotg)
-        finalg = Disk(Plane(trg.plane.p, rotg.plane.u, rotg.plane.v), trg.radius)
-        push!(disks, finalg)
-    end
-    return disks
+    return [transformmachinedgeoms(h) for h in holes]
 end
 
 """
