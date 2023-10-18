@@ -36,7 +36,8 @@ export  AbstractHoleGeometry,
         OptimizationResult,
         Tolerance,
         MultiOperationProblem,
-        setparameters!
+        setparameters!,
+        isoptimum
 
 export  createjumpmodel,
         setjumpresult!,
