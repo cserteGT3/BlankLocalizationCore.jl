@@ -1,6 +1,6 @@
 @testset "IsPrimitive geometries" begin
     sh = SimpleHole([0, 0, 0], 29)
-    sp = SimplePlane([0, 0, 0])
+    sp = SimplePlane([0, 0, 0], [0, 0, 1])
 
     @test featurepoint(sh) == [0, 0, 0]
     @test featureradius(sh) == 29

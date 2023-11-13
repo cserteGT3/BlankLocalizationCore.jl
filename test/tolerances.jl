@@ -1,8 +1,8 @@
 @testset "PlanePlaneDistance: tolerancedistance" begin
-    empty_plane = SimplePlane([0,0,0])
+    empty_plane = SimplePlane([0,0,0], [-1, 0, 0])
 
-    machined_plane1 = SimplePlane([0,0,0])
-    machined_plane2 = SimplePlane([5,6,7])
+    machined_plane1 = SimplePlane([0,0,0], [-1, 0, 0])
+    machined_plane2 = SimplePlane([5,6,7], [-1, 0, 0])
 
     mpoints = Point3[(13,9,7.1), (-100,70,6.9), (5000,-2,7.)]
     sm1 = SimpleMesh(mpoints, [connect((1,2,3))])
@@ -51,7 +51,7 @@ end
 
 @testset "PlaneAxisDistance: tolerancedistance" begin
     # test error throwing -> should be addressed by #7
-    machined_plane1 = SimplePlane([0,0,0])
+    machined_plane1 = SimplePlane([0,0,0], [-1, 0, 0])
 
     mpoints = Point3[(13,9,7.1), (-100,70,6.9), (5000,-2,7.)]
     sm1 = SimpleMesh(mpoints, [connect((1,2,3))])
@@ -79,9 +79,9 @@ end
     sh2 = SimpleHole([0, -10, 0], 15)
     empty_hole = SimpleHole([0,0,0], 0)
 
-    pl1 = SimplePlane([15, 0, 0])
-    pl2 = SimplePlane([0, 0, 15])
-    empty_plane = SimplePlane([0,0,0])
+    pl1 = SimplePlane([15, 0, 0], [-1, 0, 0])
+    pl2 = SimplePlane([0, 0, 15], [-1, 0, 0])
+    empty_plane = SimplePlane([0,0,0], [-1, 0, 0])
 
     h1 = BLC.LocalizationFeature("fronth1", pz1_front, empty_hole, sh1)
     h2 = BLC.LocalizationFeature("fronth1", pz1_front, empty_hole, sh2)
@@ -103,7 +103,7 @@ end
 
 @testset "AxisAxisDistance: tolerancedistance" begin
     ## test error throwing -> should be addressed by #7
-    machined_plane1 = SimplePlane([0,0,0])
+    machined_plane1 = SimplePlane([0,0,0], [-1, 0, 0])
 
     mpoints = Point3[(13,9,7.1), (-100,70,6.9), (5000,-2,7.)]
     sm1 = SimpleMesh(mpoints, [connect((1,2,3))])
@@ -118,13 +118,13 @@ end
     # lf2 simple plane and mesh plane
     lf2 = BLC.LocalizationFeature("tf1", pz1_front, machined_plane1, mesh_plane1)
 
-    t1_mr = LocalizationTolerance(lf1, BLC.ROUGH, lf2, BLC.MACHINED, AxisAxisDistance(), 0, 0, 0, "")
-    t1_rm = LocalizationTolerance(lf2, BLC.MACHINED, lf1, BLC.ROUGH, AxisAxisDistance(), 0, 0, 0, "")
+    t1_mr = LocalizationTolerance(lf1, BLC.ROUGH, lf2, BLC.MACHINED, AxisAxisDistance([1,0,0]), 0, 0, 0, "")
+    t1_rm = LocalizationTolerance(lf2, BLC.MACHINED, lf1, BLC.ROUGH, AxisAxisDistance([1,0,0]), 0, 0, 0, "")
     @test_throws ErrorException toleranceddistance(t1_mr)
     @test_throws ErrorException toleranceddistance(t1_rm)
 
     # plane and hole test
-    t1_mm = LocalizationTolerance(lf1, BLC.MACHINED, lf2, BLC.ROUGH, AxisAxisDistance(), 0, 0, 0, "")
+    t1_mm = LocalizationTolerance(lf1, BLC.MACHINED, lf2, BLC.ROUGH, AxisAxisDistance([1,0,0]), 0, 0, 0, "")
     @test_throws ErrorException toleranceddistance(t1_mm)
 
     ## test distance calculation
@@ -139,10 +139,10 @@ end
     rh1 = BLC.LocalizationFeature("righth1", pz2_right, sh2_rough, sh2_machined)
 
     # all comibinations of rough-machined should be the same
-    aat1 = LocalizationTolerance(fh1, BLC.MACHINED, rh1, BLC.MACHINED, AxisAxisDistance(), 20, 20, 20, "")
-    aat2 = LocalizationTolerance(fh1, BLC.MACHINED, rh1, BLC.ROUGH, AxisAxisDistance(), 20, 20, 20, "")
-    aat3 = LocalizationTolerance(fh1, BLC.ROUGH, rh1, BLC.MACHINED, AxisAxisDistance(), 20, 20, 20, "")
-    aat4 = LocalizationTolerance(fh1, BLC.ROUGH, rh1, BLC.ROUGH, AxisAxisDistance(), 20, 20, 20, "")
+    aat1 = LocalizationTolerance(fh1, BLC.MACHINED, rh1, BLC.MACHINED, AxisAxisDistance([0, 0, 1]), 20, 20, 20, "")
+    aat2 = LocalizationTolerance(fh1, BLC.MACHINED, rh1, BLC.ROUGH, AxisAxisDistance([0, 0, 1]), 20, 20, 20, "")
+    aat3 = LocalizationTolerance(fh1, BLC.ROUGH, rh1, BLC.MACHINED, AxisAxisDistance([0, 0, 1]), 20, 20, 20, "")
+    aat4 = LocalizationTolerance(fh1, BLC.ROUGH, rh1, BLC.ROUGH, AxisAxisDistance([0, 0, 1]), 20, 20, 20, "")
     @test isapprox(toleranceddistance(aat1), 20)
     @test isapprox(toleranceddistance(aat2), 20)
     @test isapprox(toleranceddistance(aat3), 20)

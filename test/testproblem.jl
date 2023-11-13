@@ -12,19 +12,19 @@
     ## Machined geometry definitions
 
     fronthole_m = SimpleHole([0, 0, 0], 29)
-    frontface_m = SimplePlane([0, 0, 0])
+    frontface_m = SimplePlane([0, 0, 0], [1, 0, 0])
 
     righthole1_m = SimpleHole([16, 15, 0], 7.5)
     righthole2_m = SimpleHole([25, -16, 3], 9)
     righthole3_m = SimpleHole([60, 0, -3], 13.5)
-    rightface1_m = SimplePlane([16, 15, 0])
-    rightface2_m = SimplePlane([25, -16, 3])
-    rightface3_m = SimplePlane([60, 0, -3])
+    rightface1_m = SimplePlane([16, 15, 0], [0, 1, 0])
+    rightface2_m = SimplePlane([25, -16, 3], [0, 1, 0])
+    rightface3_m = SimplePlane([60, 0, -3], [0, 1, 0])
 
     backhole1_m = SimpleHole([-14, 14, 0], 9)
     backhole2_m = SimpleHole([14, 14, 0], 9)
-    backface1_m = SimplePlane([-14, 14, 0])
-    backface2_m = SimplePlane([14, 14, 0])
+    backface1_m = SimplePlane([-14, 14, 0], [-1, 0, 0])
+    backface2_m = SimplePlane([14, 14, 0], [-1, 0, 0])
 
     ## Rough geometry definitions
 
