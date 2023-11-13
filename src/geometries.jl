@@ -112,12 +112,7 @@ GeometryStyle(::Type{SimpleHole}) = IsPrimitive()
 function visualizationgeometry(hole::SimpleHole)
     # p1: feature point
     p1 = Point3(hole.p)
-    # p2: deeper in the hole
-    p2 = p1 - Vec3(0,0,0.01)
-    ax = Vec3(0,0,1)
-    bottom = Plane(p2, ax)
-    top = Plane(p1, ax)
-    return Cylinder(bottom, top, hole.r)
+    return Disk(Plane(p1, Vec3(0,0,1)), hole.r)
 end
 
 """
@@ -277,6 +272,24 @@ struct PlaneLocalizationFeature{R<:AbstractPlaneGeometry,M<:AbstractPlaneGeometr
     machined::M
 end
 
+"""
+    localizationfeature(descriptor::FeatureDescriptor, rough::AbstractHoleGeometry, machined::AbstractHoleGeometry)
+
+Convenience constructor for [`HoleLocalizationFeature`](@ref).
+"""
+function localizationfeature(descriptor, rough::AbstractHoleGeometry, machined::AbstractHoleGeometry)
+    return HoleLocalizationFeature(descriptor, rough, machined)
+end
+
+"""
+    localizationfeature(descriptor::FeatureDescriptor, rough::AbstractPlaneGeometry, machined::AbstractPlaneGeometry)
+
+Convenience constructor for [`PlaneLocalizationFeature`](@ref).
+"""
+function localizationfeature(descriptor, rough::AbstractPlaneGeometry, machined::AbstractPlaneGeometry)
+    return PlaneLocalizationFeature(descriptor, rough, machined)
+end
+
 getfeaturename(f::LocalizationFeature) = getfeaturename(f.descriptor)
 getpartzero(f::LocalizationFeature) = getpartzero(f.descriptor)
 getpartzeroname(f::LocalizationFeature) = getpartzeroname(f.descriptor)
@@ -314,6 +327,15 @@ function Base.show(io::IO, or::OptimizationResult)
 end
 
 emptyor() = OptimizationResult("empty", 0.0)
+
+"""
+    isoptimum(or::OptimizationResult)
+
+Tell if `or` is in an optimal solution state, either: `OPTIMAL` or `LOCALLY_SOLVED`.
+"""
+function isoptimum(or::OptimizationResult)
+    return (or.status == "OPTIMAL") | (or.status == "LOCALLY_SOLVED")
+end
 
 struct Tolerance
     featurename1::String
@@ -407,6 +429,13 @@ function setparameters!(mop::MultiOperationProblem, pardict)
     mop.parameters = pardict
     return mop
 end
+
+"""
+    isoptimum(mop::MultiOperationProblem)
+
+Tell if `mop`'s solution is in an optimal state, either: `OPTIMAL` or `LOCALLY_SOLVED`.
+"""
+isoptimum(mop::MultiOperationProblem) = isoptimum(mop.opresult)
 
 """
     getfeaturebyname(mop::MultiOperationProblem, featurename)

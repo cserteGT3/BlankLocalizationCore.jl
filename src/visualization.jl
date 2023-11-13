@@ -1,63 +1,14 @@
-function hole2Mesheshole(partzero::PartZero, featurepoint, radius)
-    hole_axis = Vec3(zaxis(partzero))
-    # p1: feature point
-    p1 = Point3(featurepoint)
-    # p2: deeper in the hole
-    p2 = p1 - 0.1*hole_axis
-    bottom = Plane(p2, hole_axis)
-    top = Plane(p1, hole_axis)
-    return Cylinder(bottom, top, radius)
-end
-
 """
-    genroughholes(mop::MultiOperationProblem)
+    transformmachinedgeoms(lf::LocalizationFeature)
 
-Generate a `Meshes.Cylinder` object for each rough hole.
-The length of the cylinders is really small, they are rather disks.
-
-Wanted to generate `Disk`s, but `viz` is not yet defined for them.
+Get the rough state of `lf` and transform it according to its current part zero transformation.
 """
-function genroughholes(mop::MultiOperationProblem)
-    holes = collectroughholes(mop)
-    cylinders = Cylinder[]
-    for h in holes
-        fp = getroughfeaturepoint(h)
-        pz = getpartzero(h)
-        r = getroughradius(h)
-        cyl = hole2Mesheshole(pz, fp, r)
-        push!(cylinders, cyl)
-    end
-    return cylinders
-end
-
-"""
-    genmachinedholes(mop::MultiOperationProblem)
-
-Generate a `Meshes.Cylinder` object for each rough hole.
-The length of the cylinders is really small, they are rather disks.
-
-Wanted to generate `Disk`s, but `viz` is not yet defined for them.
-"""
-function genmachinedholes(mop::MultiOperationProblem)
-    holes = collectmachinedholes(mop)
-    cylinders = Cylinder[]
-    for h in holes
-        fp = getmachinedfeaturepointindatum(h)
-        pz = getpartzero(h)
-        r = getmachinedradius(h)
-        cyl = hole2Mesheshole(pz, fp, r)
-        push!(cylinders, cyl)
-    end
-    return cylinders
-end
-
-## try 2
-
 function transformmachinedgeoms(lf::LocalizationFeature)
+    # for properly working, needs this to be merged:
+    # https://github.com/JuliaGeometry/Meshes.jl/pull/623
     pz = getpartzero(lf)
     R = pz.rotation
     rot = RotMatrix{3}(R)
-    # again, I'm not sure about why the inverse...
     fr = Rotate(rot)
     ft = Translate(pz.position...)
     geom = visualizationgeometry(lf.machined)
@@ -65,13 +16,24 @@ function transformmachinedgeoms(lf::LocalizationFeature)
     return ft(geom2)
 end
 
-# this fails, but this is the way!
-# will fix after:
-# https://github.com/JuliaGeometry/Meshes.jl/issues/512
-# https://github.com/JuliaGeometry/MeshViz.jl/issues/62
-function gmholes(mop::MultiOperationProblem)
+"""
+    genmachinedholes(mop::MultiOperationProblem)
+
+Generate Meshes object for each machined hole.
+"""
+function genmachinedholes(mop::MultiOperationProblem)
     holes = collectmachinedholes(mop)
     return [transformmachinedgeoms(h) for h in holes]
+end
+
+"""
+    genroughholes(mop::MultiOperationProblem)
+
+Generate Meshes object for each rough hole.
+"""
+function genroughholes(mop::MultiOperationProblem)
+    holes = collectroughholes(mop)
+    return [visualizationgeometry(h.rough) for h in holes]
 end
 
 """

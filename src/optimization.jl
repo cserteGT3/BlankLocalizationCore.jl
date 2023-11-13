@@ -107,8 +107,10 @@ function addtolerances2model!(model, mop::MultiOperationProblem, pzmatricedict)
 
         # get features and part zero names
         f1 = getfeaturebyname(mop, t.featurename1)
-        pzn1 = getpartzeroname(f1)
         f2 = getfeaturebyname(mop, t.featurename2)
+        @assert ! isnothing(f1) "Feature $(t.featurename1) does not exist!"
+        @assert ! isnothing(f2) "Feature $(t.featurename1) does not exist!"
+        pzn1 = getpartzeroname(f1)
         pzn2 = getpartzeroname(f2)
 
         # equation (2)
@@ -183,6 +185,7 @@ function createjumpmodel(mop::MultiOperationProblem, optimizer; disable_string_n
     end
     # if maximum allowance of planes is given, then set it
     if haskey(mop.parameters, "maxPlaneZAllowance")
+        @assert mop.parameters["maxPlaneZAllowance"] > mop.parameters["minAllowance"] "Maximum plane z allowance must be larger, than minimum allowance!"
         @constraint(model, maxPlaneZAllowance == mop.parameters["maxPlaneZAllowance"])
     end
 

@@ -5,7 +5,7 @@ using DataFrames: DataFrame, names, nrow
 using PrettyTables: pretty_table, ft_nonothing, tf_html_minimalist
 using Rotations: RotMatrix
 using Meshes: SimpleMesh, vertices, boundingbox, connect, Point3, Vec3, Plane, Cylinder,
-    Rotate, Translate
+    Rotate, Translate, Disk
 using Logging: @warn
 using LinearAlgebra: norm, cross, normalize, normalize!
 using Printf: @sprintf
@@ -32,10 +32,12 @@ export  AbstractHoleGeometry,
         LocalizationFeature,
         HoleLocalizationFeature,
         PlaneLocalizationFeature,
+        localizationfeature,
         OptimizationResult,
         Tolerance,
         MultiOperationProblem,
-        setparameters!
+        setparameters!,
+        isoptimum
 
 export  createjumpmodel,
         setjumpresult!,

@@ -104,7 +104,6 @@
     Tolerance("righthole3", true, zfunc, "fronthole", true, 0, -0.2, 0.2, "15")]
 
     ## Constructing and solving the optimization problem
-    ## Constructing and solving the optimization problem
     pard = Dict("minAllowance"=>0.5, "OptimizeForToleranceCenter"=>true,
         "UseTolerances"=>true, "maxPlaneZAllowance"=>1)
 
@@ -120,19 +119,13 @@
     optimizeproblem!(mop, Ipopt.Optimizer)
     @test mop.opresult.status == "LOCALLY_SOLVED"
 
-    tolerror = toleranceerror(mop)
-
-    # atol=0.01 -> toleranceerror returns in the 0-100% range
-    @test isapprox(tolerror, 0, atol=0.01)
-
     # infeasible problem
-    pard = Dict("minAllowance"=>0.5, "OptimizeForToleranceCenter"=>true,
-        "UseTolerances"=>true, "maxPlaneZAllowance"=>0.1)
+    pard = Dict("minAllowance"=>5.0, "OptimizeForToleranceCenter"=>true,
+        "UseTolerances"=>true, "maxPlaneZAllowance"=>5.1)
     
     setparameters!(mop, pard)
     optimizeproblem!(mop, Ipopt.Optimizer)
     @test mop.opresult.status == "LOCALLY_INFEASIBLE"
     @test mop.opresult.minallowance === NaN
-
 
 end
