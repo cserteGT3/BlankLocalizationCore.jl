@@ -6,20 +6,20 @@ The only difference is, that the file uses the [Ipopt](https://github.com/jump-d
 ## Example part
 
 The following part is crafted for demonstrating purposes.
-The CAD filesa are available here: [machined](../assets/example-part-machined.stl) and [rough](../assets/example-part-rough.stl).
+The CAD filesa are available here: [machined](assets/example-part-machined.stl) and [rough](assets/example-part-rough.stl).
 The two images below show the part from its "front" and "back" sides in its machined state.
 
-![Machined look front](../assets/machined-front.png)
+![Machined look front](assets/machined-front.png)
 
-![Machined look back](../assets/machined-back.png)
+![Machined look back](assets/machined-back.png)
 
 All six holes needs to be machined and also their front faces, which means that there are six machined planes.
 
 The part in its rough (to be machined) state is shown below:
 
-![Rough look front](../assets/rough-front.png)
+![Rough look front](assets/rough-front.png)
 
-![Rough look back](../assets/rough-back.png)
+![Rough look back](assets/rough-back.png)
 
 The rough part is also designed in CAD, of course in production the dimensions of the rough part come from a measurement process.
 It can be seen, that the holes on the rough part are smaller, and their axes' are also modified a little bit in a few cases to showcase the possibilities of the algorithm.
@@ -193,9 +193,9 @@ Tolerance can be defined between both rough and/or machined features.
 
 For this example, the tolerances are created based on the drawing of the machined part.
 This is the drawing, which only contains dimensions related to the optimization problem.
-It is also available as a pdf [here](../assets/example-part-machined-tolerances.pdf).
+It is also available as a pdf [here](assets/example-part-machined-tolerances.pdf).
 
-![Tolerances](../assets/example-part-machined-tolerances.png)
+![Tolerances](assets/example-part-machined-tolerances.png)
 
 Axes in the "Pojection" column mean the axes of the workpiece datum.
 The distance of the two features' feature points are projected to those axes.
@@ -370,4 +370,4 @@ viz!.(mplanes, alpha=0.5, color=:blue)
 #GLMakie.save("example-part.png", f)
 ```
 
-![Visualization](../assets/example-part-makie.png)
+![Visualization](assets/example-part-makie.png)
