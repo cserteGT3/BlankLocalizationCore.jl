@@ -14,6 +14,15 @@ end
 
 emptyor() = OptimizationResult("empty", 0.0)
 
+"""
+    isoptimum(or::OptimizationResult)
+
+Tell if `or` is in an optimal solution state, either: `OPTIMAL` or `LOCALLY_SOLVED`.
+"""
+function isoptimum(or::OptimizationResult)
+    return (or.status == "OPTIMAL") | (or.status == "LOCALLY_SOLVED")
+end
+
 mutable struct MultiOperationProblem
     partzeros::Vector{PartZero}
     features::Vector{LocalizationFeature} # features that have rough and machined -> allowanced
@@ -74,6 +83,13 @@ function setparameters!(mop::MultiOperationProblem, pardict)
     mop.parameters = pardict
     return mop
 end
+
+"""
+    isoptimum(mop::MultiOperationProblem)
+
+Tell if `mop`'s solution is in an optimal state, either: `OPTIMAL` or `LOCALLY_SOLVED`.
+"""
+isoptimum(mop::MultiOperationProblem) = isoptimum(mop.opresult)
 
 """
     getfeaturebyname(mop::MultiOperationProblem, featurename)

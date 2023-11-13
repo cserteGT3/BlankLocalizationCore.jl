@@ -1,5 +1,18 @@
 ## part zero handling and transformations
 
+"""
+    PartZero(name, position, rotationmatrix)
+
+Define a part zero with name, position and rotationmatrix relative to the workpiece datum.
+
+# Example
+
+```julia-repl
+julia> PartZero("front", [0,0,0], hcat([0,1,0], [0,0,1], [1,0,0]))
+Part zero: "front"
+[0.0 0.0 1.0 0.0; 1.0 0.0 0.0 0.0; 0.0 1.0 0.0 0.0; 0.0 0.0 0.0 1.0]
+```
+"""
 struct PartZero
     name::String
     position::Vector{Float64}

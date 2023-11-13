@@ -4,6 +4,9 @@ using Meshes
 
 const BLC = BlankLocalizationCore
 
-@testset "BlankLocalizationCore.jl: Tolerances" begin
-    include("tolerances.jl")
-end
+#using Ipopt
+
+include("tolerances.jl")
+include("partzeros.jl")
+include("geometries.jl")
+#include("testproblem.jl")

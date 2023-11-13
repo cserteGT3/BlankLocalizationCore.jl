@@ -6,7 +6,7 @@ DocMeta.setdocmeta!(BlankLocalizationCore, :DocTestSetup, :(using BlankLocalizat
 makedocs(;
     modules=[BlankLocalizationCore],
     authors="Tamás Cserteg <cserteg.tamas@sztaki.hu>, András Kovács <akovacs@sztaki.hu> and contributors",
-    repo="https://github.com/cserteGT3/BlankLocalizationCore.jl/blob/{commit}{path}#{line}",
+    repo=Remotes.GitHub("cserteGT3", "BlankLocalizationCore.jl"),
     sitename="BlankLocalizationCore.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
@@ -16,6 +16,9 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Example" => "example.md",
+        "API extension" => "api.md",
+        "Reference" => "reference.md"
     ],
 )
 

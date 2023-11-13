@@ -57,6 +57,7 @@ end
 function addplane2model!(::IsPrimitive, model, plane, ipzmatricedict)
     # access registered variables
     minAllowance = model[:minAllowance]
+    maxPlaneZAllowance = model[:maxPlaneZAllowance]
 
     # register distance variable:
     dz = @variable(model, base_name = string("d_z_", getfeaturename(plane)))
@@ -69,12 +70,14 @@ function addplane2model!(::IsPrimitive, model, plane, ipzmatricedict)
     @constraint(model, dz == d_f[3])
     # equation (7)
     @constraint(model, -1*dz >= minAllowance)
+    @constraint(model, -1*dz <= maxPlaneZAllowance)
     return model
 end
 
 function addplane2model!(::IsFreeForm, model, plane, ipzmatricedict)
     # access registered variables
     minAllowance = model[:minAllowance]
+    maxPlaneZAllowance = model[:maxPlaneZAllowance]
 
     # filtered surface points of a free form surface
     qs = getroughfilteredpoints(plane)
@@ -92,6 +95,7 @@ function addplane2model!(::IsFreeForm, model, plane, ipzmatricedict)
         @constraint(model, dz[i] == d_f[3])
         # equation (6)
         @constraint(model, -1*dz[i] >= minAllowance)
+        @constraint(model, -1*dz[i] <= maxPlaneZAllowance)
     end
     return model
 end
@@ -103,8 +107,10 @@ function addtolerances2model!(model, mop::MultiOperationProblem, pzmatricedict)
 
         # get features and part zero names
         f1 = getfeaturebyname(mop, t.featurename1)
-        pzn1 = getpartzeroname(f1)
         f2 = getfeaturebyname(mop, t.featurename2)
+        @assert ! isnothing(f1) "Feature $(t.featurename1) does not exist!"
+        @assert ! isnothing(f2) "Feature $(t.featurename1) does not exist!"
+        pzn1 = getpartzeroname(f1)
         pzn2 = getpartzeroname(f2)
 
         # equation (2)
@@ -152,9 +158,9 @@ function createjumpmodel(mop::MultiOperationProblem, optimizer; disable_string_n
     pzmatricedict = Dict([(partzeros[i].name, pzmatrices[i]) for i in pzr])
 
     # holes that have machined state
-    machinedholes = collectmachinedholes(mop)
+    machinedholes = collectallowancedholes(mop)
     # planes that have machined state
-    machinedplanes = collectmachinedplanes(mop)
+    machinedplanes = collectallowancedplanes(mop)
     # numer of tolerances
     ntolerances = length(mop.tolerances)
     
@@ -163,6 +169,8 @@ function createjumpmodel(mop::MultiOperationProblem, optimizer; disable_string_n
     # variable for minimum allowance
     #@variable(model, minAllowance >= 0)
     @variable(model, minAllowance)
+    # variable for maximum allowance for planes
+    @variable(model, maxPlaneZAllowance)
 
     ## tolerances
     addtolerances2model!(model, mop, pzmatricedict)
@@ -175,6 +183,11 @@ function createjumpmodel(mop::MultiOperationProblem, optimizer; disable_string_n
     for p in machinedplanes
         addplane2model!(model, p, ipzmatricedict)
     end
+    # if maximum allowance of planes is given, then set it
+    if haskey(mop.parameters, "maxPlaneZAllowance")
+        @assert mop.parameters["maxPlaneZAllowance"] > mop.parameters["minAllowance"] "Maximum plane z allowance must be larger, than minimum allowance!"
+        @constraint(model, maxPlaneZAllowance == mop.parameters["maxPlaneZAllowance"])
+    end
 
     # optimization
     if mop.parameters["OptimizeForToleranceCenter"]
@@ -184,12 +197,34 @@ function createjumpmodel(mop::MultiOperationProblem, optimizer; disable_string_n
         @objective(model, Max, minAllowance)
     end
 
+    # set part zeros if option is provided
+    if haskey(mop.parameters, "SetPartZeroPosition")
+        predef_partzeros = mop.parameters["SetPartZeroPosition"]
+        lpz = length(mop.partzeros)
+        lpdz = length(predef_partzeros)
+        if lpz == lpdz
+            # for each part zero
+            for i in pzr
+                # ignore elements that are empty
+                ith_pzpose = predef_partzeros[i]
+                isempty(ith_pzpose) && continue
+                for j in 1:3
+                    isnan(ith_pzpose[j]) && continue
+                    @constraint(model, pzpose[i, j] == ith_pzpose[j])
+                end
+            end
+        else
+            throw(DimensionMismatch("Length of `SetPartZeroPosition` ($lpdz) does not match number of part zeros ($lpz)!"))
+        end
+    end
+
     return model
 end
 
 function setjumpresult!(mop::MultiOperationProblem, jump_model)
     status = termination_status(jump_model)
-    if status != TerminationStatusCode(1)
+    if (status != OPTIMAL) & (status != LOCALLY_SOLVED)
+        mop.opresult = OptimizationResult(string(status), NaN)
         @warn "Optimization did not find optimum! Ignoring result. Status: $status"
         return mop
     end
@@ -199,7 +234,7 @@ function setjumpresult!(mop::MultiOperationProblem, jump_model)
             pz.position[j] = jump_result[i, j]
         end
     end
-    jump_status = string(termination_status(jump_model))
+    jump_status = string(status)
     jump_minallowance = value(jump_model[:minAllowance])
     or = OptimizationResult(jump_status, jump_minallowance)
     mop.opresult = or

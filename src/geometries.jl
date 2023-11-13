@@ -8,6 +8,8 @@ abstract type AbstractHoleGeometry <: AbstractLocalizationGeometry end
 abstract type AbstractPlaneGeometry <: AbstractLocalizationGeometry end
 
 """
+    GeometryStyle
+
 Trait that describes the "style" of an [`AbstractLocalizationGeometry`](@ref).
 If it can be described by a primitive, then it is [`IsPrimitive`](@ref) and
 [`IsFreeForm`](@ref) otherwise.
@@ -23,30 +25,66 @@ struct IsFreeForm <: GeometryStyle end
 # don't define a global default (currently it helps development and debugging)
 #GeometryStyle(::Type) = IsPrimitive()
 
-# Functions to be implemented to comply with the interface:
-# primitive features have feature points
+"""
+    visualizationgeometry(geom::AbstractLocalizationGeometry)
+
+Return a Meshes.jl object that can be visualized.
+"""
+function visualizationgeometry end
+
+"""
+    featurepoint()
+
+Return the feature point of an [`IsPrimitive`](@ref) geometry.
+Definition signature should look like: `featurepoint(::IsPrimitive, x)`.
+"""
+function featurepoint end
+
+"""
+    surfacepoints()
+
+Return the points of the surface of an [`IsFreeForm`](@ref) geometry.
+Definition signature should look like: `surfacepoints(::IsFreeForm, x)`.
+"""
+function surfacepoints end
+
+"""
+    filteredsurfacepoints()
+
+Return the filtered points of the surface of an [`IsFreeForm`](@ref) geometry, 
+that may define active constraints in the optimization task
+(for example convex hull of mesh).
+Definition signature should look like: `filteredsurfacepoints(::IsFreeForm, x)`.
+"""
+function filteredsurfacepoints end
+
+"""
+    featureradius()
+
+Return the radius of a [`IsPrimitive`](@ref) geometry
+that is subtype of [`AbstractHoleGeometry`].
+There is a default implementation that can be used: `featureradius(::IsPrimitive, x) = x.r`.
+"""
+function featureradius end
+
 featurepoint(x::T) where {T} = featurepoint(GeometryStyle(T), x)
 featurepoint(::IsPrimitive, x) = x.p
 function featurepoint(::IsFreeForm, x)
     error("Function `featurepoint` is not defined for `IsFreeForm`` features")
 end
 
-# Functions to be implemented to comply with the interface:
-# free form geometries have surfacepoints
-# return all points of a free form surface
+
 surfacepoints(x::T) where {T} = surfacepoints(GeometryStyle(T), x)
 function surfacepoints(::IsPrimitive, x)
     error("Function `surfacepoints` is not defined for `IsPrimitive`` features")
 end
 
-# free form geometries have surfacepoints
-# return only those points, that may define active constraints
+
 filteredsurfacepoints(x::T) where {T} = filteredsurfacepoints(GeometryStyle(T), x)
 function filteredsurfacepoints(::IsPrimitive, x)
     error("Function `surfacepoints` is not defined for `IsPrimitive`` features")
 end
 
-# radius is only defined for hole like features that are IsPrimitive
 featureradius(x::T) where {T<:AbstractHoleGeometry} = featureradius(GeometryStyle(T), x)
 featureradius(::IsPrimitive, x) = x.r
 function featureradius(::IsFreeForm, x)
@@ -66,6 +104,12 @@ end
 
 GeometryStyle(::Type{SimpleHole}) = IsPrimitive()
 
+function visualizationgeometry(hole::SimpleHole)
+    # p1: feature point
+    p1 = Point3(hole.p)
+    return Disk(Plane(p1, Vec3(0,0,1)), hole.r)
+end
+
 """
 SimplePlane <: AbstractPlaneGeometry
 
@@ -77,6 +121,44 @@ struct SimplePlane <: AbstractPlaneGeometry
 end
 
 GeometryStyle(::Type{SimplePlane}) = IsPrimitive()
+
+function rectangleforplane(point, v1 ,v2, sidelength)
+    c1 = point + sidelength/2*v1 + -1*sidelength/2*v2
+    c2 = c1 + -1*sidelength*v1
+    c3 = c2 + sidelength*v2
+    c4 = c3 + sidelength*v1
+    g1 = Point3(c1)
+    g2 = Point3(c2)
+    g3 = Point3(c3)
+    g4 = Point3(c4)
+    return SimpleMesh([g1,g2,g3,g4], connect.([(1,2,3),(3,4,1)]))
+end
+
+function visualizationgeometry(plane::SimplePlane)
+    return rectangleforplane(plane.p, [1,0,0], [0,1,0], 20)
+end
+
+"""
+PlaneAndNormal <: AbstractPlaneGeometry
+
+A simple plane structure with one point and a normal vector.
+"""
+struct PlaneAndNormal <: AbstractPlaneGeometry
+    p::Vector{Float64}
+    n::Vector{Float64}
+end
+
+GeometryStyle(::Type{PlaneAndNormal}) = IsPrimitive()
+
+# should try first the 3 axes
+randnormal(v::Vector) = normalize(cross(v, rand(3)))
+
+function visualizationgeometry(plane::PlaneAndNormal)
+    o = plane.p
+    v1 = randnormal(plane.n)
+    v2 = cross(v1, plane.n)
+    return rectangleforplane(o, v1, v2, 20)
+end
 
 """
 MeshHole <: AbstractHoleGeometry
@@ -95,6 +177,10 @@ function surfacepoints(::IsFreeForm, x::MeshHole)
     points = vertices(x.surface)
     verts = [x.coords for x in points]
     return verts
+end
+
+function visualizationgeometry(meshhole::MeshHole)
+    return meshhole.surface
 end
 
 function filteredsurfacepoints(::IsFreeForm, x::MeshHole)
@@ -116,6 +202,10 @@ function surfacepoints(::IsFreeForm, x::MeshPlane)
     points = vertices(x.surface)
     verts = [x.coords for x in points]
     return verts
+end
+
+function visualizationgeometry(meshplane::MeshPlane)
+    return meshplane.surface
 end
 
 function filteredsurfacepoints(::IsFreeForm, x::MeshPlane)
