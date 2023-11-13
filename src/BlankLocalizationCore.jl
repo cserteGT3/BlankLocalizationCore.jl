@@ -28,7 +28,6 @@ export  AbstractHoleGeometry,
         SimplePlane,
         MeshHole,
         MeshPlane,
-        LocalizationFeature,
         HoleLocalizationFeature,
         PlaneLocalizationFeature
         

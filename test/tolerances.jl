@@ -12,13 +12,13 @@
     pz2 = PartZero("testpz2", [0,0,0], [0 0 1;0 1 0;0 1 0])
 
     # lf1 has machined_plane1 as machined feature
-    lf1 = LocalizationFeature("t1", pz1, empty_plane, machined_plane1)
+    lf1 = BLC.LocalizationFeature("t1", pz1, empty_plane, machined_plane1)
     # lf2 has machined_plane2 as machined feature
-    lf2 = LocalizationFeature("tf1", pz1, empty_plane, machined_plane2)
+    lf2 = BLC.LocalizationFeature("tf1", pz1, empty_plane, machined_plane2)
     # lf3 has "wrong" z axis
-    lf3 = LocalizationFeature("t3", pz2, empty_plane, empty_plane)
+    lf3 = BLC.LocalizationFeature("t3", pz2, empty_plane, empty_plane)
     # lf4 has both features a mesh, and "correct" part zero
-    lf4 = LocalizationFeature("t4", pz1, mesh_plane1, mesh_plane1)
+    lf4 = BLC.LocalizationFeature("t4", pz1, mesh_plane1, mesh_plane1)
     
     # testing machined-machined distance
     # nominal, lower, upper, and note doesn't matter here
@@ -61,9 +61,9 @@ end
     pz2_right = PartZero("testpz2", [10,10,10], [-1 0 0;0 0 1;0 1 0])
 
     # lf1 simple plane and simple plane
-    lf1 = LocalizationFeature("t1", pz1_front, machined_plane1, machined_plane1)
+    lf1 = BLC.LocalizationFeature("t1", pz1_front, machined_plane1, machined_plane1)
     # lf2 simple plane and mash plane
-    lf2 = LocalizationFeature("tf1", pz1_front, machined_plane1, mesh_plane1)
+    lf2 = BLC.LocalizationFeature("tf1", pz1_front, machined_plane1, mesh_plane1)
 
     t1_mr = LocalizationTolerance(lf1, BLC.ROUGH, lf2, BLC.MACHINED, PlaneAxisDistance(), 0, 0, 0, "")
     t1_rm = LocalizationTolerance(lf2, BLC.MACHINED, lf1, BLC.ROUGH, PlaneAxisDistance(), 0, 0, 0, "")
@@ -83,11 +83,11 @@ end
     pl2 = SimplePlane([0, 0, 15])
     empty_plane = SimplePlane([0,0,0])
 
-    h1 = LocalizationFeature("fronth1", pz1_front, empty_hole, sh1)
-    h2 = LocalizationFeature("fronth1", pz1_front, empty_hole, sh2)
+    h1 = BLC.LocalizationFeature("fronth1", pz1_front, empty_hole, sh1)
+    h2 = BLC.LocalizationFeature("fronth1", pz1_front, empty_hole, sh2)
 
-    p1 = LocalizationFeature("rightp1", pz2_right, empty_plane, pl1)
-    p2 = LocalizationFeature("rightp2", pz2_right, empty_plane, pl2)
+    p1 = BLC.LocalizationFeature("rightp1", pz2_right, empty_plane, pl1)
+    p2 = BLC.LocalizationFeature("rightp2", pz2_right, empty_plane, pl2)
 
     lt11 = LocalizationTolerance(p1, BLC.MACHINED, h1, BLC.MACHINED, PlaneAxisDistance(), 10, 10, 10, "")
     lt12 = LocalizationTolerance(p1, BLC.MACHINED, h2, BLC.MACHINED, PlaneAxisDistance(), 20, 20, 20, "")
@@ -114,9 +114,9 @@ end
     pz2_right = PartZero("rightpz2", [10,10,10], [-1 0 0;0 0 1;0 1 0])
 
     # lf1 simple plane and simple plane
-    lf1 = LocalizationFeature("t1", pz1_front, machined_plane1, machined_plane1)
+    lf1 = BLC.LocalizationFeature("t1", pz1_front, machined_plane1, machined_plane1)
     # lf2 simple plane and mesh plane
-    lf2 = LocalizationFeature("tf1", pz1_front, machined_plane1, mesh_plane1)
+    lf2 = BLC.LocalizationFeature("tf1", pz1_front, machined_plane1, mesh_plane1)
 
     t1_mr = LocalizationTolerance(lf1, BLC.ROUGH, lf2, BLC.MACHINED, AxisAxisDistance(), 0, 0, 0, "")
     t1_rm = LocalizationTolerance(lf2, BLC.MACHINED, lf1, BLC.ROUGH, AxisAxisDistance(), 0, 0, 0, "")
@@ -134,9 +134,9 @@ end
     sh1_rough = SimpleHole([0, 10, 0], 14.9)
     sh2_rough = SimpleHole([5, 25, 20], 14.9)
 
-    fh1 = LocalizationFeature("fronth1", pz1_front, sh1_rough, sh1_machined)
+    fh1 = BLC.LocalizationFeature("fronth1", pz1_front, sh1_rough, sh1_machined)
 
-    rh1 = LocalizationFeature("righth1", pz2_right, sh2_rough, sh2_machined)
+    rh1 = BLC.LocalizationFeature("righth1", pz2_right, sh2_rough, sh2_machined)
 
     # all comibinations of rough-machined should be the same
     aat1 = LocalizationTolerance(fh1, BLC.MACHINED, rh1, BLC.MACHINED, AxisAxisDistance(), 20, 20, 20, "")
@@ -164,8 +164,8 @@ end
     
     # distance aac2_m -> aac2_r: sqrt(2)
     
-    aac_lf1 = LocalizationFeature("righth1", pz2_right, aac1_r, aac1_m)
-    aac_lf2 = LocalizationFeature("righth2", pz3_right, aac2_r, aac2_m)
+    aac_lf1 = BLC.LocalizationFeature("righth1", pz2_right, aac1_r, aac1_m)
+    aac_lf2 = BLC.LocalizationFeature("righth2", pz3_right, aac2_r, aac2_m)
     
     aac1 = LocalizationTolerance(aac_lf1, BLC.MACHINED, aac_lf1, BLC.ROUGH, AxisAxisConcentric(), sqrt(2)/10, 0,0, "")
     aac2 = LocalizationTolerance(aac_lf1, BLC.MACHINED, aac_lf2, BLC.MACHINED, AxisAxisConcentric(), 0, 0,0, "")
@@ -186,7 +186,7 @@ end
     aac_c1 = [connect((1,2,3))]
     aac_mesh1 = MeshHole(SimpleMesh(aac_ps1, aac_c1), [])
 
-    aacpf_lf1 = LocalizationFeature("h1", pz_aac, aac_mesh1, aacpf_h)
+    aacpf_lf1 = BLC.LocalizationFeature("h1", pz_aac, aac_mesh1, aacpf_h)
     t_aacpf1 = LocalizationTolerance(aacpf_lf1, BLC.MACHINED, aacpf_lf1, BLC.ROUGH, AxisAxisConcentric(), 1,1,1,"")
     @test isapprox(toleranceddistance(t_aacpf1), 1)
 
@@ -195,7 +195,7 @@ end
     sm2 = SimpleMesh(aac_ps2, aac_c1)
     aac_mesh2 = MeshHole(sm2, [])
 
-    aacpf_lf2 = LocalizationFeature("h1", pz_aac, aac_mesh2, aacpf_h)
+    aacpf_lf2 = BLC.LocalizationFeature("h1", pz_aac, aac_mesh2, aacpf_h)
     t_aacpf2 = LocalizationTolerance(aacpf_lf2, BLC.MACHINED, aacpf_lf2, BLC.ROUGH, AxisAxisConcentric(), 1,0,2,"")
     @test isapprox(toleranceddistance(t_aacpf2), 2)
 
@@ -204,7 +204,7 @@ end
     sm3 = SimpleMesh(aac_ps3, aac_c1)
     aac_mesh3 = MeshHole(sm3, [])
 
-    aacpf_lf3 = LocalizationFeature("h1", pz_aac, aac_mesh3, aacpf_h)
+    aacpf_lf3 = BLC.LocalizationFeature("h1", pz_aac, aac_mesh3, aacpf_h)
     t_aacpf3 = LocalizationTolerance(aacpf_lf3, BLC.MACHINED, aacpf_lf3, BLC.ROUGH, AxisAxisConcentric(), 1,0.5,1.5,"")
     @test isapprox(toleranceddistance(t_aacpf3), 0.5)
 end
