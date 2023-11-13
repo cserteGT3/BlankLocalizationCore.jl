@@ -15,5 +15,5 @@ These functions and types are not exported, though they can be used if needed.
 
 ```@autodocs
 Modules = [BlankLocalizationCore]
-Public = false
+Private = true
 ```
