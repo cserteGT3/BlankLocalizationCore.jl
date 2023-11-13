@@ -82,7 +82,7 @@ end
 
 filteredsurfacepoints(x::T) where {T} = filteredsurfacepoints(GeometryStyle(T), x)
 function filteredsurfacepoints(::IsPrimitive, x)
-    error("Function `surfacepoints` is not defined for `IsPrimitive`` features")
+    error("Function `filteredsurfacepoints` is not defined for `IsPrimitive`` features")
 end
 
 featureradius(x::T) where {T<:AbstractHoleGeometry} = featureradius(GeometryStyle(T), x)
@@ -232,8 +232,8 @@ getpartzeroname(f::LocalizationFeature) = getpartzeroname(f.partzero)
 
 getroughfeaturepoint(f::LocalizationFeature) = featurepoint(f.rough)
 getmachinedfeaturepoint(f::LocalizationFeature) = featurepoint(f.machined)
-getmachinedradius(f::LocalizationFeature) = featureradius(f.machined)
 getroughradius(f::LocalizationFeature) = featureradius(f.rough)
+getmachinedradius(f::LocalizationFeature) = featureradius(f.machined)
 
 getroughfilteredpoints(f::LocalizationFeature) = filteredsurfacepoints(f.rough)
 
