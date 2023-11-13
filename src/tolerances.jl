@@ -6,10 +6,8 @@ struct PlanePlaneDistance <: LocalizationToleranceType end
 struct PlaneAxisDistance <: LocalizationToleranceType end
 
 struct AxisAxisDistance <: LocalizationToleranceType
-    projectionaxis::Union{Nothing,Vector{Float64}}
+    projectionaxis::Vector{Float64}
 end
-
-AxisAxisDistance() = AxisAxisDistance(nothing)
 
 struct AxisAxisConcentric <: LocalizationToleranceType end
 
@@ -113,10 +111,6 @@ function toleranceddistance(type::PlaneAxisDistance, t::LocalizationTolerance)
     return distance
 end
 
-#TODO
-# what happens if both axes are parallel???
-# then which axis is used to check the distance?
-# -> an axis can be defined
 function toleranceddistance(type::AxisAxisDistance, t::LocalizationTolerance)
     f1 = t.feature1
     m1 = t.machined1
@@ -147,13 +141,8 @@ function toleranceddistance(type::AxisAxisDistance, t::LocalizationTolerance)
     fp1 = m1 == MACHINED ? getmachinedfeaturepointindatum(f1) : getroughfeaturepoint(f1)
     fp2 = m2 == MACHINED ? getmachinedfeaturepointindatum(f2) : getroughfeaturepoint(f2)
 
-    zaxis1 = zaxis(getpartzero(f1))
-    zaxis2 = zaxis(getpartzero(f2))
-
-    perpend_v = isnothing(type.projectionaxis) ? cross(zaxis1, zaxis2) : type.projectionaxis
-
     distancev = fp1 - fp2
-    distance = abs(dot(perpend_v, distancev))
+    distance = abs(dot(type.projectionaxis, distancev))
 
     return distance
 end
