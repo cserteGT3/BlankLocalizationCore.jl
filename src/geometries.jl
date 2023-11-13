@@ -113,11 +113,11 @@ end
 """
 SimplePlane <: AbstractPlaneGeometry
 
-A simple plane structure with one point.
-Normal vector of the plane is defined by its partzero taken from the feature descriptor.
+A simple plane structure with one point and a normal vector.
 """
 struct SimplePlane <: AbstractPlaneGeometry
     p::Vector{Float64}
+    n::Vector{Float64}
 end
 
 GeometryStyle(::Type{SimplePlane}) = IsPrimitive()
@@ -135,25 +135,6 @@ function rectangleforplane(point, v1 ,v2, sidelength)
 end
 
 function visualizationgeometry(plane::SimplePlane)
-    return rectangleforplane(plane.p, [1,0,0], [0,1,0], 20)
-end
-
-"""
-PlaneAndNormal <: AbstractPlaneGeometry
-
-A simple plane structure with one point and a normal vector.
-"""
-struct PlaneAndNormal <: AbstractPlaneGeometry
-    p::Vector{Float64}
-    n::Vector{Float64}
-end
-
-GeometryStyle(::Type{PlaneAndNormal}) = IsPrimitive()
-
-# should try first the 3 axes
-randnormal(v::Vector) = normalize(cross(v, rand(3)))
-
-function visualizationgeometry(plane::PlaneAndNormal)
     o = plane.p
     v1 = randnormal(plane.n)
     v2 = cross(v1, plane.n)
