@@ -201,9 +201,8 @@ end
 A feature that is machined and allowance can be computed for it.
 It has a name, a [`PartZero`](@ref), and a rough and machined geometry
 ([`AbstractLocalizationGeometry`](@ref)).
-The two geometries should be of same type (hole, plane, etc.),
-but [`HoleLocalizationFeature`](@ref) and [`PlaneLocalizationFeature`](@ref) enforce this
-property
+The two geometries should be of same type (hole, plane, etc.), but only
+[`HoleLocalizationFeature`](@ref) and [`PlaneLocalizationFeature`](@ref) enforce this property.
 """
 struct LocalizationFeature{R,M}
     name::String
