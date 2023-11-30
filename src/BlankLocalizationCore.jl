@@ -7,7 +7,8 @@ using Rotations: RotMatrix
 using Meshes: SimpleMesh, vertices, boundingbox, connect, Point3, Vec3, Plane, Cylinder,
     Rotate, Translate, Disk
 using Logging: @warn
-using LinearAlgebra: norm, cross, normalize, normalize!
+using Statistics: mean
+using LinearAlgebra: norm, dot, cross, inv, normalize, normalize!
 using Printf: @sprintf
 
 export  PartZero,
@@ -25,19 +26,21 @@ export  AbstractHoleGeometry,
         visualizationgeometry,
         SimpleHole,
         SimplePlane,
-        PlaneAndNormal,
         MeshHole,
         MeshPlane,
-        FeatureDescriptor,
-        LocalizationFeature,
         HoleLocalizationFeature,
-        PlaneLocalizationFeature,
-        localizationfeature,
-        OptimizationResult,
-        Tolerance,
+        PlaneLocalizationFeature
+        
+export  PlanePlaneDistance,
+        PlaneAxisDistance,
+        AxisAxisDistance,
+        AxisAxisConcentric,
+        LocalizationTolerance,
+        toleranceddistance
+        
+export  OptimizationResult,
         MultiOperationProblem,
-        setparameters!,
-        isoptimum
+        setparameters!
 
 export  createjumpmodel,
         setjumpresult!,
@@ -66,6 +69,8 @@ HV(v) = vcat(v, 1)
 
 include("partzeros.jl")
 include("geometries.jl")
+include("tolerances.jl")
+include("optimizationproblem.jl")
 include("optimization.jl")
 include("resultevaluation.jl")
 include("visualization.jl")

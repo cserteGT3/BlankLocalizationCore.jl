@@ -21,7 +21,8 @@ end
 
 Base.show(io::IO, pz::PartZero) = print(io, "Part zero: \"", pz.name, "\"")
 
-Base.show(io::IO, ::MIME"text/plain", pz::PartZero) = print(io, "Part zero: \"", pz.name, "\"\n", getpartzeroHM(pz))
+Base.show(io::IO, ::MIME"text/plain", pz::PartZero) = print(io, "Part zero: \"",
+    pz.name, "\"\n", getpartzeroHM(pz))
 
 xaxis(partzero::PartZero) = partzero.rotation[:,1]
 yaxis(partzero::PartZero) = partzero.rotation[:,2]
@@ -68,7 +69,6 @@ function inverthomtr(M)
     return invtr
 end
 
-
 """
     getpartzerobyname(partzeros::Vector{PartZero}, partzeroname::AbstractString)
 
@@ -80,7 +80,6 @@ function getpartzerobyname(partzeros::Vector{PartZero}, partzeroname::AbstractSt
     end
     return nothing
 end
-
 
 """
     printpartzeropositions(partzeros::Vector{PartZero})

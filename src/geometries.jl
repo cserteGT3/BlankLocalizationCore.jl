@@ -1,4 +1,4 @@
-"""Supertype for localization geometries."""
+"""Supertype of localization geometries."""
 abstract type AbstractLocalizationGeometry end
 
 """Supertype of hole like localization geometries."""
@@ -7,23 +7,18 @@ abstract type AbstractHoleGeometry <: AbstractLocalizationGeometry end
 """Supertype of plane like geometries."""
 abstract type AbstractPlaneGeometry <: AbstractLocalizationGeometry end
 
-
-# Traits that all features need to have:
-# rough OR machined -> this can be eliminated by having two fields: rough and machined
-# primitive OR freeform
-# hole OR plane: trait/abstract type/type parameter???
-
-
 """
     GeometryStyle
 
 Trait that describes the "style" of an [`AbstractLocalizationGeometry`](@ref).
-Currently it can be either [`IsPrimitive`](@ref) or [`IsFreeForm`](@ref).
+If it can be described by a primitive, then it is [`IsPrimitive`](@ref) and
+[`IsFreeForm`](@ref) otherwise.
 """
 abstract type GeometryStyle end
 
 """Primitive geometries can be explicitly described, e.g. a box or sphere."""
 struct IsPrimitive <: GeometryStyle end
+
 """Free form geometries are discrete representations, e.g. a mesh or a point cloud."""
 struct IsFreeForm <: GeometryStyle end
 
@@ -81,13 +76,13 @@ end
 
 surfacepoints(x::T) where {T} = surfacepoints(GeometryStyle(T), x)
 function surfacepoints(::IsPrimitive, x)
-    error("Function `surfacepoints` is not defined for `IsFreeForm`` features")
+    error("Function `surfacepoints` is not defined for `IsPrimitive`` features")
 end
 
 
 filteredsurfacepoints(x::T) where {T} = filteredsurfacepoints(GeometryStyle(T), x)
 function filteredsurfacepoints(::IsPrimitive, x)
-    error("Function `surfacepoints` is not defined for `IsPrimitive`` features")
+    error("Function `filteredsurfacepoints` is not defined for `IsPrimitive`` features")
 end
 
 featureradius(x::T) where {T<:AbstractHoleGeometry} = featureradius(GeometryStyle(T), x)
@@ -118,11 +113,11 @@ end
 """
 SimplePlane <: AbstractPlaneGeometry
 
-A simple plane structure with one point.
-Normal vector of the plane is defined by its partzero taken from the feature descriptor.
+A simple plane structure with one point and a normal vector.
 """
 struct SimplePlane <: AbstractPlaneGeometry
     p::Vector{Float64}
+    n::Vector{Float64}
 end
 
 GeometryStyle(::Type{SimplePlane}) = IsPrimitive()
@@ -140,25 +135,6 @@ function rectangleforplane(point, v1 ,v2, sidelength)
 end
 
 function visualizationgeometry(plane::SimplePlane)
-    return rectangleforplane(plane.p, [1,0,0], [0,1,0], 20)
-end
-
-"""
-PlaneAndNormal <: AbstractPlaneGeometry
-
-A simple plane structure with one point and a normal vector.
-"""
-struct PlaneAndNormal <: AbstractPlaneGeometry
-    p::Vector{Float64}
-    n::Vector{Float64}
-end
-
-GeometryStyle(::Type{PlaneAndNormal}) = IsPrimitive()
-
-# should try first the 3 axes
-randnormal(v::Vector) = normalize(cross(v, rand(3)))
-
-function visualizationgeometry(plane::PlaneAndNormal)
     o = plane.p
     v1 = randnormal(plane.n)
     v2 = cross(v1, plane.n)
@@ -177,6 +153,12 @@ struct MeshHole <: AbstractHoleGeometry
 end
 
 GeometryStyle(::Type{MeshHole}) = IsFreeForm()
+
+function surfacepoints(::IsFreeForm, x::MeshHole)
+    points = vertices(x.surface)
+    verts = [x.coords for x in points]
+    return verts
+end
 
 function visualizationgeometry(meshhole::MeshHole)
     return meshhole.surface
@@ -197,6 +179,12 @@ end
 
 GeometryStyle(::Type{MeshPlane}) = IsFreeForm()
 
+function surfacepoints(::IsFreeForm, x::MeshPlane)
+    points = vertices(x.surface)
+    verts = [x.coords for x in points]
+    return verts
+end
+
 function visualizationgeometry(meshplane::MeshPlane)
     return meshplane.surface
 end
@@ -208,103 +196,47 @@ end
 
 
 """
-Store description of a feature: its name, the corresponding part zero, if it has or has not
-a machined and a rough state.
-"""
-struct FeatureDescriptor
-    name::String
-    partzero::PartZero
-    hasmachined::Bool
-    hasrough::Bool
-end
-
-getfeaturename(f::FeatureDescriptor) = f.name
-getpartzero(f::FeatureDescriptor) = f.partzero
-getpartzeroname(f::FeatureDescriptor) = getpartzeroname(getpartzero(f))
-hasmachined(f::FeatureDescriptor) = f.hasmachined
-hasrough(f::FeatureDescriptor) = f.hasrough
-
-function Base.show(io::IO, fd::FeatureDescriptor)
-    print(io, fd.name, " in ", fd.partzero.name,
-    fd.hasmachined ? "; machined, " : "; ! machined, ",
-    fd.hasrough ? "rough" : "! rough")
-end
-
-"""
     LocalizationFeature{R,M}
 
-Supertype of any localization features.
-A localization feature contains a feature
-descriptor ([`FeatureDescriptor`](@ref)) and a rough and machined geometry
+A feature that is machined and allowance can be computed for it.
+It has a name, a [`PartZero`](@ref), and a rough and machined geometry
 ([`AbstractLocalizationGeometry`](@ref)).
-The two geometries must be of same type (hole, plane, etc.).
-If a feature doesn't have a rough of machined state, an empty object should be used
-(and the feature descriptor should also store this information).
-based on its rough geometry.
+The two geometries should be of same type (hole, plane, etc.), but only
+[`HoleLocalizationFeature`](@ref) and [`PlaneLocalizationFeature`](@ref) enforce this property.
 """
-abstract type LocalizationFeature{R,M} end
+struct LocalizationFeature{R,M}
+    name::String
+    partzero::PartZero
+    rough::R
+    machined::M
+end
+
+const HoleLocalizationFeature{R,M} = LocalizationFeature{R,M} where {R<:AbstractHoleGeometry, M<:AbstractHoleGeometry}
+
+HoleLocalizationFeature(n, p, r, m) = LocalizationFeature(n, p, r, m)
+
+const PlaneLocalizationFeature{R,M} = LocalizationFeature{R,M} where {R<:AbstractPlaneGeometry, M<:AbstractPlaneGeometry}
+
+PlaneLocalizationFeature(n, p, r, m) = LocalizationFeature(n, p, r, m)
+
+GeometryStyle(::Type{LocalizationFeature{R,M}}) where {R,M} = GeometryStyle(R)
 
 function Base.show(io::IO, lf::LocalizationFeature)
-    print(io, typeof(lf), ": ", lf.descriptor.name)
+    print(io, typeof(lf), ": ", getfeaturename(lf))
 end
 
-"""
-    HoleLocalizationFeature(descriptor::FeatureDescriptor, rough::R, machined::M) where {R<:AbstractHoleGeometry,M<:AbstractHoleGeometry}
-
-A holelike localization feature. The rough and machined geometries don't necessarily
-have to be the same type.
-"""
-struct HoleLocalizationFeature{R<:AbstractHoleGeometry,M<:AbstractHoleGeometry} <: LocalizationFeature{R,M}
-    descriptor::FeatureDescriptor
-    rough::R
-    machined::M
-end
-
-"""
-    PlaneLocalizationFeature(descriptor::FeatureDescriptor, rough::R, machined::M) where {R<:AbstractPlaneGeometry,M<:AbstractPlaneGeometry}
-
-A planelike localization feature. The rough and machined geometries don't necessarily
-have to be the same type.
-"""
-struct PlaneLocalizationFeature{R<:AbstractPlaneGeometry,M<:AbstractPlaneGeometry} <: LocalizationFeature{R,M}
-    descriptor::FeatureDescriptor
-    rough::R
-    machined::M
-end
-
-"""
-    localizationfeature(descriptor::FeatureDescriptor, rough::AbstractHoleGeometry, machined::AbstractHoleGeometry)
-
-Convenience constructor for [`HoleLocalizationFeature`](@ref).
-"""
-function localizationfeature(descriptor, rough::AbstractHoleGeometry, machined::AbstractHoleGeometry)
-    return HoleLocalizationFeature(descriptor, rough, machined)
-end
-
-"""
-    localizationfeature(descriptor::FeatureDescriptor, rough::AbstractPlaneGeometry, machined::AbstractPlaneGeometry)
-
-Convenience constructor for [`PlaneLocalizationFeature`](@ref).
-"""
-function localizationfeature(descriptor, rough::AbstractPlaneGeometry, machined::AbstractPlaneGeometry)
-    return PlaneLocalizationFeature(descriptor, rough, machined)
-end
-
-getfeaturename(f::LocalizationFeature) = getfeaturename(f.descriptor)
-getpartzero(f::LocalizationFeature) = getpartzero(f.descriptor)
-getpartzeroname(f::LocalizationFeature) = getpartzeroname(f.descriptor)
-hasmachined(f::LocalizationFeature) = hasmachined(f.descriptor)
-hasrough(f::LocalizationFeature) = hasrough(f.descriptor)
+getfeaturename(f::LocalizationFeature) = f.name
+getpartzero(f::LocalizationFeature) = f.partzero
+getpartzeroname(f::LocalizationFeature) = getpartzeroname(f.partzero)
 
 getroughfeaturepoint(f::LocalizationFeature) = featurepoint(f.rough)
 getmachinedfeaturepoint(f::LocalizationFeature) = featurepoint(f.machined)
-getmachinedradius(f::LocalizationFeature) = featureradius(f.machined)
 getroughradius(f::LocalizationFeature) = featureradius(f.rough)
+getmachinedradius(f::LocalizationFeature) = featureradius(f.machined)
 
 getroughfilteredpoints(f::LocalizationFeature) = filteredsurfacepoints(f.rough)
 
 function getmachinedfeaturepointindatum(f::LocalizationFeature)
-    @assert hasmachined(f)
     v = getmachinedfeaturepoint(f)
     pz = getpartzero(f)
     T = getpartzeroHM(pz)
@@ -313,205 +245,14 @@ function getmachinedfeaturepointindatum(f::LocalizationFeature)
 end
 
 """
-    OptimizationResult
+    transformmachined2datum(feature, points)
 
-Store the status (result) of an optimization run and the minimum allowance value.
+Transform a list of points with the part zero of `feature`.
 """
-struct OptimizationResult
-    status::String
-    minallowance::Float64
-end
-
-function Base.show(io::IO, or::OptimizationResult)
-    print(io, or.status, ", minimum allowance: ", or.minallowance)
-end
-
-emptyor() = OptimizationResult("empty", 0.0)
-
-"""
-    isoptimum(or::OptimizationResult)
-
-Tell if `or` is in an optimal solution state, either: `OPTIMAL` or `LOCALLY_SOLVED`.
-"""
-function isoptimum(or::OptimizationResult)
-    return (or.status == "OPTIMAL") | (or.status == "LOCALLY_SOLVED")
-end
-
-struct Tolerance
-    featurename1::String
-    ismachined1::Bool
-    projection::Function
-    featurename2::String
-    ismachined2::Bool
-    nominalvalue::Float64
-    lowervalue::Float64
-    uppervalue::Float64
-    note::String
-end
-
-"""
-    MultiOperationProblem
-
-Collect all data for a multi operation problem, including: part zeros, holes, planes,
-tolerances, parameters and optimization result.
-"""
-mutable struct MultiOperationProblem
-    partzeros::Vector{PartZero}
-    holes::Vector{HoleLocalizationFeature}
-    planes::Vector{PlaneLocalizationFeature}
-    tolerances::Vector{Tolerance}
-    parameters::Dict{String,Any}
-    opresult::OptimizationResult
-end
-
-"""
-    MultiOperationProblem(partzeros, holes, planes, tolerances, parameters)
-
-Construct a multi operation problem.
-For usage, please see the example section in the documentation.
-The parameters for the optimization are also described there with greater details.
-
-# Arguments
-
-- `partzeros::Vector{PartZero}`: array of part zeros.
-- `holes::Vector{HoleLocalizationFeature}`: array of holes.
-- `planes::Vector{PlaneLocalizationFeature}`: array of planes.
-- `tolerances::Vector{Tolerance}`: array of tolerances.
-- `parameters::Dict{String,Any}`: parameters in the form of a dictionary. Keys include:
-    `minAllowance`, `OptimizeForToleranceCenter`, `UseTolerances`,
-    `SetPartZeroPosition`, `maxPlaneZAllowance`.
-"""
-function MultiOperationProblem(partzeros, holes, planes, tolerances, parameters)
-    return MultiOperationProblem(partzeros, holes, planes, tolerances, parameters, emptyor())
-end
-
-function problemtype(mop::MultiOperationProblem)
-    # problem type is depending on the rough geometries: IsPrimitive or IsFreeForm
-    # if there is at least one IsFreeForm rough geometry -> hybrid problem
-    holetypes = GeometryStyle.(typeof.(x.rough for x in mop.holes))
-    for ht in holetypes
-        ht === IsFreeForm() && return :HybridProblem
-    end
-    planetypes = GeometryStyle.(typeof.(x.rough for x in mop.planes))
-    for pt in planetypes
-        pt === IsFreeForm() && return :HybridProblem
-    end
-    return :PrimitiveProblem
-end
-
-function Base.show(io::IO, mop::MultiOperationProblem)
-    nh = size(mop.holes, 1)
-    np = size(mop.planes, 1)
-    npz = size(mop.partzeros, 1)
-    nts = size(mop.tolerances, 1)
-    sn = string(problemtype(mop))
-    print(io, sn,": ",
-    npz," part zero", npz > 1 ? "s, " : ", ",
-    nh," hole", nh > 1 ? "s, " : ", ",
-    np," plane", np > 1 ? "s, " : ", ",
-    nts," tolerance", nts > 1 ? "s" : "",
-    ", status: ", mop.opresult.status)
-end
-
-"""
-    printpartzeropositions(mop::MultiOperationProblem)
-
-Print the positions of the part zeros of a `MultiOperationProblem`.
-"""
-printpartzeropositions(mop::MultiOperationProblem) = printpartzeropositions(mop.partzeros)
-
-"""
-    setparameters!(mop::MultiOperationProblem, pardict)
-
-Set parameter dictionary of a `MultiOperationProblem` to `pardict`.
-"""
-function setparameters!(mop::MultiOperationProblem, pardict)
-    mop.parameters = pardict
-    return mop
-end
-
-"""
-    isoptimum(mop::MultiOperationProblem)
-
-Tell if `mop`'s solution is in an optimal state, either: `OPTIMAL` or `LOCALLY_SOLVED`.
-"""
-isoptimum(mop::MultiOperationProblem) = isoptimum(mop.opresult)
-
-"""
-    getfeaturebyname(mop::MultiOperationProblem, featurename)
-
-Get a hole or plane feature by its name.
-It is assumed that all features have distinct names.
-Return `nothing`, if no feature is found with `featurename`.
-"""
-function getfeaturebyname(mop::MultiOperationProblem, featurename)
-    function retbyname(array, name)
-        for f in array
-            if getfeaturename(f) == name
-                return f
-            end
-        end
-        return nothing
-    end
-
-    hole_ = retbyname(mop.holes, featurename)
-    isnothing(hole_) || return hole_
-    # return plane even if it is nothing
-    return retbyname(mop.planes, featurename)
-end
-
-"""
-    collectholesbypartzero(mop::MultiOperationProblem, partzeroname)
-
-Collect holes that are grouped to part zero called `partzeroname`.
-"""
-function getholesbypartzero(mop::MultiOperationProblem, partzeroname)
-    return filter(x->getpartzeroname(x) == partzeroname, mop.holes)
-end
-
-"""
-    collectmachinedholes(mop::MultiOperationProblem)
-
-Collect holes that have a machined state.
-"""
-collectmachinedholes(mop::MultiOperationProblem) = filter(hasmachined, mop.holes)
-
-"""
-    collectmachinedplanes(mop::MultiOperationProblem)
-
-Collect planes that have a machined state.
-"""
-collectmachinedplanes(mop::MultiOperationProblem) = filter(hasmachined, mop.planes)
-
-"""
-    collectroughholes(mop::MultiOperationProblem)
-
-Collect those holes, that have rough stage.
-"""
-collectroughholes(mop::MultiOperationProblem) = filter(hasrough, mop.holes)
-
-"""
-    collectroughplanes(mop::MultiOperationProblem)
-
-Collect those planes, that have rough stage.
-"""
-collectroughplanes(mop::MultiOperationProblem) = filter(hasrough, mop.planes)
-
-
-"""
-    collectallowancedholes(mop::MultiOperationProblem)
-
-Collect holes that have machined and rough states, thus allowance should be calculated for.
-"""
-function collectallowancedholes(mop::MultiOperationProblem)
-    return [h for h in mop.holes if hasmachined(h) & hasrough(h)]
-end
-
-"""
-    collectallowancedplanes(mop::MultiOperationProblem)
-
-Collect planes that have machined and rough states, thus allowance should be calculated for.
-"""
-function collectallowancedplanes(mop::MultiOperationProblem)
-    return [p for p in mop.planes if hasmachined(p) & hasrough(p)]
+function transformmachined2datum(feature, points)
+    pz = getpartzero(feature)
+    M = getpartzeroHM(pz)
+    newpoints = (M*HV(p) for p in points)
+    resultpoints = [p[1:3] for p in newpoints]
+    return resultpoints
 end
