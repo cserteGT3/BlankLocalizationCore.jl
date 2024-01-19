@@ -10,7 +10,7 @@ function addhole2model!(::IsPrimitive, model, hole, ipzmatricedict)
     # register distance variable:
     dxy = @variable(model, base_name = string("d_xy_", getfeaturename(hole)), lower_bound = 0.0)
 
-    pzn = getpartzeroname(hole)
+    pzn = partzeroname(hole)
     v_machined = getmachinedfeaturepoint(hole)
     v_rough = getroughfeaturepoint(hole)
     r_machined = getmachinedradius(hole)
@@ -35,7 +35,7 @@ function addhole2model!(::IsFreeForm, model, hole, ipzmatricedict)
     # register distance variable:
     dxy = @variable(model, [qiter], base_name = string("d_xy_", getfeaturename(hole)), lower_bound = 0.0)
 
-    pzn = getpartzeroname(hole)
+    pzn = partzeroname(hole)
     v_machined = getmachinedfeaturepoint(hole)
     r_machined = getmachinedradius(hole)
     # equation (4)
@@ -62,7 +62,7 @@ function addplane2model!(::IsPrimitive, model, plane, ipzmatricedict)
     # register distance variable:
     dz = @variable(model, base_name = string("d_z_", getfeaturename(plane)))
     
-    pzn = getpartzeroname(plane)
+    pzn = partzeroname(plane)
     v_machined = getmachinedfeaturepoint(plane)
     v_rough = getroughfeaturepoint(plane)
     # equation (4)
@@ -86,7 +86,7 @@ function addplane2model!(::IsFreeForm, model, plane, ipzmatricedict)
     # register distance variable:
     dz = @variable(model, [qiter], base_name = string("d_z_", getfeaturename(plane)))
 
-    pzn = getpartzeroname(plane)
+    pzn = partzeroname(plane)
     v_machined = getmachinedfeaturepoint(plane)
     # equation (4)
     for (i, q) in enumerate(qs)
@@ -110,8 +110,8 @@ function addtolerances2model!(model, mop::MultiOperationProblem, pzmatricedict)
         f2 = getfeaturebyname(mop, t.featurename2)
         @assert ! isnothing(f1) "Feature $(t.featurename1) does not exist!"
         @assert ! isnothing(f2) "Feature $(t.featurename1) does not exist!"
-        pzn1 = getpartzeroname(f1)
-        pzn2 = getpartzeroname(f2)
+        pzn1 = partzeroname(f1)
+        pzn2 = partzeroname(f2)
 
         # equation (2)
         v1 = @expression(model, t.ismachined1 ? pzmatricedict[pzn1]*HV(getmachinedfeaturepoint(f1)) : getroughfeaturepoint(f1))

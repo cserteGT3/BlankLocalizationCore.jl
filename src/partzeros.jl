@@ -28,7 +28,7 @@ xaxis(partzero::PartZero) = partzero.rotation[:,1]
 yaxis(partzero::PartZero) = partzero.rotation[:,2]
 zaxis(partzero::PartZero) = partzero.rotation[:,3]
 
-getpartzeroname(pz::PartZero) = pz.name
+partzeroname(pz::PartZero) = pz.name
 
 """
     getpartzeroHM(partzero::PartZero)
