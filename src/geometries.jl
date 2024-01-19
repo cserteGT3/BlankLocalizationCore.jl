@@ -1,12 +1,3 @@
-"""Supertype of localization geometries."""
-abstract type AbstractLocalizationGeometry end
-
-"""Supertype of hole like localization geometries."""
-abstract type AbstractHoleGeometry <: AbstractLocalizationGeometry end
-
-"""Supertype of plane like geometries."""
-abstract type AbstractPlaneGeometry <: AbstractLocalizationGeometry end
-
 """
     GeometryStyle
 
@@ -22,223 +13,142 @@ struct IsPrimitive <: GeometryStyle end
 """Free form geometries are discrete representations, e.g. a mesh or a point cloud."""
 struct IsFreeForm <: GeometryStyle end
 
-# don't define a global default (currently it helps development and debugging)
-#GeometryStyle(::Type) = IsPrimitive()
+"""Enum to store if a feature is hole or plane like."""
+@enum GeometryType PLANELIKE HOLELIKE
+
+"""Supertype for feature types."""
+abstract type AbstractFeature{G} end
+
+GeometryStyle(f::AbstractFeature) = GeometryStyle(f.geometry)
+featurename(f::AbstractFeature) = f.name
+geometrytype(f::AbstractFeature) = f.gtype
+geometry(f::AbstractFeature) = f.geometry
+
+isplanelike(st::AbstractFeature) = geometrytype(st) == PLANELIKE
+isholelike(st::AbstractFeature) = geometrytype(st) == HOLELIKE
 
 """
-    visualizationgeometry(geom::AbstractLocalizationGeometry)
-
-Return a Meshes.jl object that can be visualized.
-"""
-function visualizationgeometry end
-
-"""
-    featurepoint()
+    featurepoint(f::AbstractFeature)
 
 Return the feature point of an [`IsPrimitive`](@ref) geometry.
-Definition signature should look like: `featurepoint(::IsPrimitive, x)`.
 """
-function featurepoint end
+featurepoint(f::AbstractFeature) = featurepoint(GeometryStyle(f), f)
+featurepoint(::IsPrimitive, f) = featurepoint(geometry(f))
+function featurepoint(::IsFreeForm, f)
+    error("Function `featurepoint` is not defined for `IsFreeForm` features.")
+end
 
 """
-    surfacepoints()
+    surfacepoints(f::AbstractFeature)
 
 Return the points of the surface of an [`IsFreeForm`](@ref) geometry.
-Definition signature should look like: `surfacepoints(::IsFreeForm, x)`.
 """
-function surfacepoints end
+surfacepoints(f::AbstractFeature) = surfacepoints(GeometryStyle(f), f)
 
-"""
-    filteredsurfacepoints()
+surfacepoints(::IsFreeForm, f) = surfacepoints(geometry(f))
 
-Return the filtered points of the surface of an [`IsFreeForm`](@ref) geometry, 
-that may define active constraints in the optimization task
-(for example convex hull of mesh).
-Definition signature should look like: `filteredsurfacepoints(::IsFreeForm, x)`.
-"""
-function filteredsurfacepoints end
-
-"""
-    featureradius()
-
-Return the radius of a [`IsPrimitive`](@ref) geometry
-that is subtype of [`AbstractHoleGeometry`].
-There is a default implementation that can be used: `featureradius(::IsPrimitive, x) = x.r`.
-"""
-function featureradius end
-
-featurepoint(x::T) where {T} = featurepoint(GeometryStyle(T), x)
-featurepoint(::IsPrimitive, x) = x.p
-function featurepoint(::IsFreeForm, x)
-    error("Function `featurepoint` is not defined for `IsFreeForm`` features")
-end
-
-
-surfacepoints(x::T) where {T} = surfacepoints(GeometryStyle(T), x)
-function surfacepoints(::IsPrimitive, x)
-    error("Function `surfacepoints` is not defined for `IsPrimitive`` features")
-end
-
-
-filteredsurfacepoints(x::T) where {T} = filteredsurfacepoints(GeometryStyle(T), x)
-function filteredsurfacepoints(::IsPrimitive, x)
-    error("Function `filteredsurfacepoints` is not defined for `IsPrimitive`` features")
-end
-
-featureradius(x::T) where {T<:AbstractHoleGeometry} = featureradius(GeometryStyle(T), x)
-featureradius(::IsPrimitive, x) = x.r
-function featureradius(::IsFreeForm, x)
-    error("Function `featureradius` is not defined for `IsFreeForm`` features")
+function surfacepoints(::IsPrimitive, f)
+    error("Function `surfacepoints` is not defined for `IsPrimitive` features.")
 end
 
 """
-SimpleHole <: AbstractHoleGeometry
+    featureradius(f::AbstractFeature)
 
-A simple "hole" structure with a center point and a radius.
-Axis of the hole is defined by its partzero taken from the feature descriptor.
+Return the radius of a [`IsPrimitive`](@ref) geometry, that is `HOLELIKE`.
 """
-struct SimpleHole <: AbstractHoleGeometry
-    p::Vector{Float64}
-    r::Float64
+featureradius(f::AbstractFeature) = featureradius(GeometryStyle(f), f)
+
+function featureradius(::IsPrimitive, f)
+    if isholelike(f)
+        return featureradius(geometry(f))
+    else
+        error("Function `featureradius` is only defined for `HOLELIKE` features.")
+    end
 end
 
-GeometryStyle(::Type{SimpleHole}) = IsPrimitive()
-
-function visualizationgeometry(hole::SimpleHole)
-    # p1: feature point
-    p1 = Point3(hole.p)
-    return Disk(Plane(p1, Vec3(0,0,1)), hole.r)
+function featureradius(::IsFreeForm, f)
+    error("Function `featureradius` is not defined for `IsFreeForm` features.")
 end
 
-"""
-SimplePlane <: AbstractPlaneGeometry
+## default functions for Cylinders, Planes and Meshes
+featurepoint(g::Meshes.Plane) = g(0,0)
 
-A simple plane structure with one point and a normal vector.
-"""
-struct SimplePlane <: AbstractPlaneGeometry
-    p::Vector{Float64}
-    n::Vector{Float64}
+featurepoint(g::Meshes.Cylinder) = featurepoint(top(g))
+
+surfacepoints(g::Meshes.Mesh) = vertices(g)
+
+featureradius(g::Meshes.Cylinder) = radius(g)
+
+struct RoughFeature{G} <: AbstractFeature{G}
+    name::String
+    gtype::GeometryType
+    geometry::G
 end
 
-GeometryStyle(::Type{SimplePlane}) = IsPrimitive()
+GeometryStyle(f::Meshes.Primitive) = IsPrimitive()
+GeometryStyle(f::Meshes.Domain) = IsFreeForm()
+#GeometryStyle(f) = IsFreeForm()
 
-function rectangleforplane(point, v1 ,v2, sidelength)
-    c1 = point + sidelength/2*v1 + -1*sidelength/2*v2
-    c2 = c1 + -1*sidelength*v1
-    c3 = c2 + sidelength*v2
-    c4 = c3 + sidelength*v1
-    g1 = Point3(c1)
-    g2 = Point3(c2)
-    g3 = Point3(c3)
-    g4 = Point3(c4)
-    return SimpleMesh([g1,g2,g3,g4], connect.([(1,2,3),(3,4,1)]))
+#=
+for ST = subtypes(Meshes.Primitive)
+    eval(quote
+        GeometryStyle(::Type{$ST}) = IsPrimitive()    
+    end)
+end
+GeometryStyle(::Type) = IsFreeForm()
+=#
+
+struct MachinedFeature{G<:Meshes.Primitive} <: AbstractFeature{G}
+    name::String
+    gtype::GeometryType
+    geometry::G
+    partzero::PartZero
 end
 
-function visualizationgeometry(plane::SimplePlane)
-    o = plane.p
-    v1 = randnormal(plane.n)
-    v2 = cross(v1, plane.n)
-    return rectangleforplane(o, v1, v2, 20)
-end
-
-"""
-MeshHole <: AbstractHoleGeometry
-
-A simple mesh hole geometry, that contains the mesh of the hole's surface and the convex
-hull of the points (see our paper for details).
-"""
-struct MeshHole <: AbstractHoleGeometry
-    surface::SimpleMesh
-    convexhull::Vector{Vector{Float64}}
-end
-
-GeometryStyle(::Type{MeshHole}) = IsFreeForm()
-
-function surfacepoints(::IsFreeForm, x::MeshHole)
-    points = vertices(x.surface)
-    verts = [x.coords for x in points]
-    return verts
-end
-
-function visualizationgeometry(meshhole::MeshHole)
-    return meshhole.surface
-end
-
-function filteredsurfacepoints(::IsFreeForm, x::MeshHole)
-    return x.convexhull
-end
-
-"""
-MeshPlane <: AbstractPlaneGeometry
-
-A simple mesh plane geometry, that contains the mesh of a planar face.
-"""
-struct MeshPlane <: AbstractPlaneGeometry
-    surface::SimpleMesh
-end
-
-GeometryStyle(::Type{MeshPlane}) = IsFreeForm()
-
-function surfacepoints(::IsFreeForm, x::MeshPlane)
-    points = vertices(x.surface)
-    verts = [x.coords for x in points]
-    return verts
-end
-
-function visualizationgeometry(meshplane::MeshPlane)
-    return meshplane.surface
-end
-
-function filteredsurfacepoints(::IsFreeForm, x::MeshPlane)
-    bbox = boundingbox(x.surface)
-    return [bbox.min.coords, bbox.max.coords]
-end
+partzero(f::MachinedFeature) = f.partzero
+partzeroname(f::MachinedFeature) = partzeroname(f.partzero)
 
 
 """
-    LocalizationFeature{R,M}
+    LocalizationFeature
 
 A feature that is machined and allowance can be computed for it.
-It has a name, a [`PartZero`](@ref), and a rough and machined geometry
-([`AbstractLocalizationGeometry`](@ref)).
-The two geometries should be of same type (hole, plane, etc.), but only
-[`HoleLocalizationFeature`](@ref) and [`PlaneLocalizationFeature`](@ref) enforce this property.
+It has a name, a [`RoughFeature`](@ref) and a [`MachinedFeature`](@ref).
+The two geometries should be of same [`GeometryType`](@ref) (holelike or planelike),
+the constructor enforces this property.
 """
-struct LocalizationFeature{R,M}
+struct LocalizationFeature{G}
     name::String
-    partzero::PartZero
-    rough::R
-    machined::M
+    roughfeature::RoughFeature{G}
+    machinedfeature::MachinedFeature
+    function LocalizationFeature(n, r::RoughFeature{T}, m) where {T}
+        if isplanelike(r) == isplanelike(m)
+            new{T}(n, r, m)
+        else
+            error("GeometryType of rough and machined does not match!")
+        end
+    end
 end
 
-const HoleLocalizationFeature{R,M} = LocalizationFeature{R,M} where {R<:AbstractHoleGeometry, M<:AbstractHoleGeometry}
-
-HoleLocalizationFeature(n, p, r, m) = LocalizationFeature(n, p, r, m)
-
-const PlaneLocalizationFeature{R,M} = LocalizationFeature{R,M} where {R<:AbstractPlaneGeometry, M<:AbstractPlaneGeometry}
-
-PlaneLocalizationFeature(n, p, r, m) = LocalizationFeature(n, p, r, m)
-
-GeometryStyle(::Type{LocalizationFeature{R,M}}) where {R,M} = GeometryStyle(R)
+featurename(lf::LocalizationFeature) = lf.name
+partzero(lf::LocalizationFeature) = partzero(lf.machinedfeature)
+partzeroname(lf::LocalizationFeature) = partzeroname(lf.partzero)
+isplanelike(lf::LocalizationFeature) = isplanelike(lf.roughfeature)
+isholelike(lf::LocalizationFeature) = isholelike(lf.roughfeature)
+GeometryStyle(lf::LocalizationFeature) = GeometryStyle(lf.roughfeature)
 
 function Base.show(io::IO, lf::LocalizationFeature)
-    print(io, typeof(lf), ": ", getfeaturename(lf))
+    print(io, typeof(lf), ": ", featurename(lf))
 end
 
-getfeaturename(f::LocalizationFeature) = f.name
-getpartzero(f::LocalizationFeature) = f.partzero
-getpartzeroname(f::LocalizationFeature) = getpartzeroname(f.partzero)
+roughfeaturepoint(lf::LocalizationFeature) = featurepoint(lf.rough)
+machinedfeaturepoint(lf::LocalizationFeature) = featurepoint(lf.machined)
+roughradius(lf::LocalizationFeature) = featureradius(lf.rough)
+machinedradius(lf::LocalizationFeature) = featureradius(lf.machined)
 
-getroughfeaturepoint(f::LocalizationFeature) = featurepoint(f.rough)
-getmachinedfeaturepoint(f::LocalizationFeature) = featurepoint(f.machined)
-getroughradius(f::LocalizationFeature) = featureradius(f.rough)
-getmachinedradius(f::LocalizationFeature) = featureradius(f.machined)
-
-getroughfilteredpoints(f::LocalizationFeature) = filteredsurfacepoints(f.rough)
-
-function getmachinedfeaturepointindatum(f::LocalizationFeature)
-    v = getmachinedfeaturepoint(f)
-    pz = getpartzero(f)
+function machinedfeaturepointindatum(f::LocalizationFeature)
+    v = machinedfeaturepoint(f)
+    pz = partzero(f)
     T = getpartzeroHM(pz)
     v_indatum = T*HV(v)
     return v_indatum[1:3]
@@ -250,7 +160,7 @@ end
 Transform a list of points with the part zero of `feature`.
 """
 function transformmachined2datum(feature, points)
-    pz = getpartzero(feature)
+    pz = partzero(feature)
     M = getpartzeroHM(pz)
     newpoints = (M*HV(p) for p in points)
     resultpoints = [p[1:3] for p in newpoints]
