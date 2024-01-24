@@ -36,7 +36,7 @@ The features in tolerances ([`LocalizationTolerance`](@ref)) can be `nothing`, i
 mutable struct MultiOperationProblem
     partzeros::Vector{PartZero}
     features::Vector{LocalizationFeature} # features that have rough and machined -> allowanced
-    tolerances::Vector{LocalizationTolerance}
+    tolerances # Vector{AbstractTolerance}
     parameters::Dict{String,Real}
     opresult::OptimizationResult
 end
@@ -46,26 +46,26 @@ function MultiOperationProblem(partzeros, features, tolerances, parameters)
 end
 
 function problemtype(mop::MultiOperationProblem)
-    # problem type is depending on the rough geometries: IsPrimitive or IsFreeForm
-    # if there is at least one IsFreeForm rough geometry -> hybrid problem
-    featuretypes = GeometryStyle.(typeof.(x.rough for x in mop.features))
+    # problem type is depending on the rough geometries: Primitive or FreeForm
+    # if there is at least one FreeForm rough geometry -> hybrid problem
+    featuretypes = RepresentationStyle.(mop.features)
     for ft in featuretypes
-        ft === IsFreeForm() && return :HybridProblem
+        ft === FreeForm() && return :HybridProblem
     end
     return :PrimitiveProblem
 end
 
-function collectholefeatures(mop::MultiOperationProblem)
-    filter(x->x isa HoleLocalizationFeature, mop.features)
+function cylindricalfeatures(mop::MultiOperationProblem)
+    filter(x->FeatureStyle(x) === Cylindrical(), mop.features)
 end
 
-function collectplanefeatures(mop::MultiOperationProblem)
-    filter(x->x isa PlaneLocalizationFeature, mop.features)
+function planarfeatures(mop::MultiOperationProblem)
+    filter(x->FeatureStyle(x) === Planar(), mop.features)
 end
 
 function Base.show(io::IO, mop::MultiOperationProblem)
-    nh = size(collectholefeatures(mop), 1)
-    np = size(collectplanefeatures(mop), 1)
+    nh = size(cylindricalfeatures(mop), 1)
+    np = size(planarfeatures(mop), 1)
     npz = size(mop.partzeros, 1)
     nts = size(mop.tolerances, 1)
     sn = string(problemtype(mop))
@@ -101,20 +101,32 @@ Tell if `mop`'s solution is in an optimal state, either: `OPTIMAL` or `LOCALLY_S
 """
 isoptimum(mop::MultiOperationProblem) = isoptimum(mop.opresult)
 
+
 """
-    getfeaturebyname(mop::MultiOperationProblem, featurename)
+    getfeaturebyname(features, featuresname)
 
 Get a hole or plane feature by its name.
 It is assumed that all features have distinct names.
-Return `nothing`, if no feature is found with `featurename`.
+Return `nothing`, if no feature is found with `featuresname`.
 """
-function getfeaturebyname(mop::MultiOperationProblem, featurename)
-    for f in mop.features
-        if getfeaturename(f) == featurename
+function getfeaturebyname(features, featuresname)
+    for f in features
+        if featurename(f) == featuresname
             return f
         end
     end
     return nothing
+end
+
+"""
+    getfeaturebyname(mop::MultiOperationProblem, featurename)
+
+Get a hole or plane feature by its name from a vector of features.
+It is assumed that all features have distinct names.
+Return `nothing`, if no feature is found with `featurename`.
+"""
+function getfeaturebyname(mop::MultiOperationProblem, featurename)
+    getfeaturebyname(mop.features, featurename)
 end
 
 """

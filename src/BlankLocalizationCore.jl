@@ -15,26 +15,25 @@ using Printf: @sprintf
 export  PartZero,
         printpartzeropositions
 
-export  GeometryStyle,
-        PLANELIKE,
-        HOLELIKE,
-        isplanelike,
-        isholelike,
-        IsPrimitive,
-        IsFreeForm,
+export  RepresentationStyle,
+        FeatureStyle,
+        AbstractLocalizationGeometry,
+        SimpleHole,
+        MeshHole,
+        SimplePlane,
+        MeshPlane,
         featurepoint,
         surfacepoints,
+        filteredsurfacepoints,
         featureradius,
         RoughFeature,
         MachinedFeature,
         LocalizationFeature
         
-export  PlanePlaneDistance,
-        PlaneAxisDistance,
-        AxisAxisDistance,
-        AxisAxisConcentric,
-        LocalizationTolerance,
-        toleranceddistance
+export  PositionTolerance,
+        ConcentrictyTolerance,
+        ProjectedDimensionTolerance,
+        addtolerance2model!
         
 export  OptimizationResult,
         MultiOperationProblem,
@@ -67,8 +66,8 @@ HV(v) = vcat(v, 1)
 
 include("partzeros.jl")
 include("geometries.jl")
-#include("tolerances.jl")
-#include("optimizationproblem.jl")
+include("tolerances.jl")
+include("optimizationproblem.jl")
 #include("optimization.jl")
 #include("resultevaluation.jl")
 #include("visualization.jl")

@@ -1,3 +1,103 @@
+"""Supertype of any tolerance."""
+abstract type AbstractTolerance end
+
+"""
+Function to add any tolerance 
+"""
+function addtolerance2model! end
+
+# getters -> standardize package: do I write get_*** or just ***?
+# these are the defaults
+"""
+    tolerancefeature(t::AbstractTolerance)
+
+Return the feature that is toleranced relative to the datum feature.
+"""
+tolerancefeature(t::AbstractTolerance) = t.feature
+
+"""
+    datumfeature(t::AbstractTolerance)
+
+Return the datum feature.
+"""
+datumfeature(t::AbstractTolerance) = t.datumfeature
+
+"""
+    nominalvalue(t::AbstractTolerance)
+
+Return the nominal value of a tolerance.
+"""
+nominalvalue(t::AbstractTolerance) = t.nominalval
+
+"""
+    minimumvalue(t::AbstractTolerance)
+
+Return the minimum value of a tolerance.
+"""
+minimumvalue(t::AbstractTolerance) = t.minval
+
+"""
+    maximumvalue(t::AbstractTolerance)
+
+Return the maximum value of a tolerance.
+"""
+maximumvalue(t::AbstractTolerance) = t.maxval
+
+"""Supertype of location type tolerances."""
+abstract type LocationTolerance <: AbstractTolerance end
+
+struct PositionTolerance <: LocationTolerance
+    datumfeature
+    feature
+    nominalval
+    minval
+    maxval
+    function PositionTolerance(d, f, nv, miv, mav)
+        if (RepresentationStyle(d) !== Primitive()) || (RepresentationStyle(f) !== Primitive())
+            error("PositionTolerance is currently only defined between primitives!")
+        end
+        return new(d, f, nv, miv, mav)
+    end
+end
+
+struct ConcentrictyTolerance <: LocationTolerance
+    datumfeature
+    feature
+    nominalval
+    minval
+    maxval
+end
+
+"""
+    ProjectedDimensionTolerance <: AbstractTolerance
+
+Dimension tolerance between a feature and a datum feature. Projection means
+that a projection function is used for R^3->R.
+"""
+struct ProjectedDimensionTolerance <: AbstractTolerance
+    datumfeature
+    feature
+    nominalval
+    minval
+    maxval
+    projection
+end
+
+function Base.show(io::IO, t::ProjectedDimensionTolerance)
+    print(io, "ProjDimTol<", featurename(t.datumfeature), "-", featurename(t.feature),
+    " : ", t.minval, "-", t.maxval, ">",)
+end
+
+"""
+    projection(t::ProjectedDimensionTolerance)
+
+Return the projection function of `t`.
+"""
+projection(t::ProjectedDimensionTolerance) = t.projection
+
+
+#=
+
 """Supertype of tolerance types."""
 abstract type LocalizationToleranceType end
 
@@ -246,3 +346,5 @@ function evaluatetolerance(t::LocalizationTolerance)
     rel_d = 2*abs_d/(t.uppervalue-t.lowervalue)*100
     return (d, rel_d)
 end
+
+=#
