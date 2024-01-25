@@ -32,7 +32,7 @@ end
 RepresentationStyle(g::SimpleHole) = Primitive()
 FeatureStyle(g::SimpleHole) = Cylindrical()
 
-featurepoint(g::SimpleHole) = plane(g.geom)(0,0)
+featurepoint(g::SimpleHole) = Meshes.plane(g.geom)(0,0)
 featureradius(g::SimpleHole) = radius(g.geom)
 
 struct MeshHole <: AbstractLocalizationGeometry
@@ -106,7 +106,7 @@ end
 """
     featureradius(f::AbstractFeature)
 
-Return the radius of a [`Primitive`](@ref) geometry, that is `HOLELIKE`.
+Return the radius of a [`Primitive`](@ref) geometry, that is `Cylindrical`.
 """
 featureradius(f::AbstractFeature) = featureradius(RepresentationStyle(f), FeatureStyle(f), f)
 
@@ -154,7 +154,7 @@ end
 
 featurename(lf::LocalizationFeature) = lf.name
 partzero(lf::LocalizationFeature) = partzero(lf.machinedfeature)
-partzeroname(lf::LocalizationFeature) = partzeroname(lf.partzero)
+partzeroname(lf::LocalizationFeature) = partzeroname(partzero(lf))
 isplanar(lf::LocalizationFeature) = isplanar(lf.roughfeature)
 iscylindrical(lf::LocalizationFeature) = iscylindrical(lf.roughfeature)
 RepresentationStyle(lf::LocalizationFeature) = RepresentationStyle(lf.roughfeature)
@@ -165,10 +165,12 @@ function Base.show(io::IO, lf::LocalizationFeature)
     " ", nicestr(RepresentationStyle(lf)), ", ", nicestr(FeatureStyle(lf)))
 end
 
-roughfeaturepoint(lf::LocalizationFeature) = featurepoint(lf.rough)
-machinedfeaturepoint(lf::LocalizationFeature) = featurepoint(lf.machined)
-roughradius(lf::LocalizationFeature) = featureradius(lf.rough)
-machinedradius(lf::LocalizationFeature) = featureradius(lf.machined)
+roughfeaturepoint(lf::LocalizationFeature) = featurepoint(lf.roughfeature)
+machinedfeaturepoint(lf::LocalizationFeature) = featurepoint(lf.machinedfeature)
+roughradius(lf::LocalizationFeature) = featureradius(lf.roughfeature)
+machinedradius(lf::LocalizationFeature) = featureradius(lf.machinedfeature)
+machinedfilteredsurfacepoints(lf::LocalizationFeature) = filteredsurfacepoints(lf.machinedfeature)
+roughfilteredsurfacepoints(lf::LocalizationFeature) = filteredsurfacepoints(lf.roughfeature)
 
 #=
 function machinedfeaturepointindatum(f::LocalizationFeature)

@@ -1,20 +1,23 @@
-# dispatch on GeometryStyle trait
-function addhole2model!(model, hole::HoleLocalizationFeature{R,M}, ipzmatricedict) where {R,M}
-    return addhole2model!(GeometryStyle(R), model, hole, ipzmatricedict)
+function addallowancedfeature2model!(model, f, ipzmatricedict)
+    # dispatch on: primitive/free-form and planar/cylindrical
+    addallowancedfeature2model!(RepresentationStyle(f), FeatureStyle(f), model, f, ipzmatricedict)
 end
 
-function addhole2model!(::IsPrimitive, model, hole, ipzmatricedict)
+function addallowancedfeature2model!(::Primitive, ::Cylindrical, model, feature, ipzmatricedict)
     # access registered variables
     minAllowance = model[:minAllowance]
 
     # register distance variable:
-    dxy = @variable(model, base_name = string("d_xy_", getfeaturename(hole)), lower_bound = 0.0)
+    dxy = @variable(model, base_name = string("d_xy_", featurename(feature)), lower_bound = 0.0)
 
-    pzn = partzeroname(hole)
-    v_machined = getmachinedfeaturepoint(hole)
-    v_rough = getroughfeaturepoint(hole)
-    r_machined = getmachinedradius(hole)
-    r_rough = getroughradius(hole)
+    pzn = partzeroname(feature)
+    # featurepoints are Meshes.Point
+    v_machined_ = machinedfeaturepoint(feature)
+    v_machined = [v_machined_.coords.coords...]
+    v_rough_ = roughfeaturepoint(feature)
+    v_rough = [v_rough_.coords.coords...]
+    r_machined = machinedradius(feature)
+    r_rough = roughradius(feature)
     # equation (4)
     d_f = @expression(model, HV(v_machined)-ipzmatricedict[pzn]*HV(v_rough))
     # equation (5)
@@ -24,47 +27,20 @@ function addhole2model!(::IsPrimitive, model, hole, ipzmatricedict)
     return model
 end
 
-function addhole2model!(::IsFreeForm, model, hole, ipzmatricedict)
-    # access registered variables
-    minAllowance = model[:minAllowance]
-
-    # filtered surface points of a free form surface
-    qs = getroughfilteredpoints(hole)
-    qiter = 1:length(qs)
-
-    # register distance variable:
-    dxy = @variable(model, [qiter], base_name = string("d_xy_", getfeaturename(hole)), lower_bound = 0.0)
-
-    pzn = partzeroname(hole)
-    v_machined = getmachinedfeaturepoint(hole)
-    r_machined = getmachinedradius(hole)
-    # equation (4)
-    for (i, q) in enumerate(qs)
-        d_f = @expression(model, HV(v_machined)-ipzmatricedict[pzn]*HV(q))
-        # equation (5)
-        @constraint(model, dxy[i]*dxy[i] >= d_f[1]*d_f[1] + d_f[2]*d_f[2])
-        # equation (6)
-        @constraint(model, r_machined - dxy[i] >= minAllowance)
-    end
-    return model
-end
-
-# dispatch on GeometryStyle trait
-function addplane2model!(model, plane::PlaneLocalizationFeature{R,M}, ipzmatricedict) where {R,M}
-    return addplane2model!(GeometryStyle(R), model, plane, ipzmatricedict)
-end
-
-function addplane2model!(::IsPrimitive, model, plane, ipzmatricedict)
+function addallowancedfeature2model!(::Primitive, ::Planar, model, feature, ipzmatricedict)
     # access registered variables
     minAllowance = model[:minAllowance]
     maxPlaneZAllowance = model[:maxPlaneZAllowance]
 
     # register distance variable:
-    dz = @variable(model, base_name = string("d_z_", getfeaturename(plane)))
+    dz = @variable(model, base_name = string("d_z_", featurename(feature)))
     
-    pzn = partzeroname(plane)
-    v_machined = getmachinedfeaturepoint(plane)
-    v_rough = getroughfeaturepoint(plane)
+    pzn = partzeroname(feature)
+    v_machined_ = machinedfeaturepoint(feature)
+    v_machined = [v_machined_.coords.coords...]
+    v_rough_ = roughfeaturepoint(feature)
+    v_rough = [v_rough_.coords.coords...]
+
     # equation (4)
     d_f = @expression(model, HV(v_machined)-ipzmatricedict[pzn]*HV(v_rough))
     @constraint(model, dz == d_f[3])
@@ -74,22 +50,51 @@ function addplane2model!(::IsPrimitive, model, plane, ipzmatricedict)
     return model
 end
 
-function addplane2model!(::IsFreeForm, model, plane, ipzmatricedict)
+function addallowancedfeature2model!(::FreeForm, ::Cylindrical, model, feature, ipzmatricedict)
+    # access registered variables
+    minAllowance = model[:minAllowance]
+    
+    # filtered surface points of a free form surface
+    qs = roughfilteredsurfacepoints(feature)
+    qiter = 1:length(qs)
+    
+    # register distance variable:
+    dxy = @variable(model, [qiter], base_name = string("d_xy_", getfeaturename(feature)), lower_bound = 0.0)
+    
+    pzn = partzeroname(feature)
+    v_machined_ = machinedfeaturepoint(feature)
+    v_machined = [v_machined_.coords.coords...]
+    r_machined = machinedradius(feature)
+    # equation (4)
+    for (i, qmeshes) in enumerate(qs)
+        q = [qmeshes.coords.coords...]
+        d_f = @expression(model, HV(v_machined)-ipzmatricedict[pzn]*HV(q))
+        # equation (5)
+        @constraint(model, dxy[i]*dxy[i] >= d_f[1]*d_f[1] + d_f[2]*d_f[2])
+        # equation (6)
+        @constraint(model, r_machined - dxy[i] >= minAllowance)
+    end
+    return model
+end
+
+function addallowancedfeature2model!(::FreeForm, ::Planar, model, feature, ipzmatricedict)
     # access registered variables
     minAllowance = model[:minAllowance]
     maxPlaneZAllowance = model[:maxPlaneZAllowance]
 
     # filtered surface points of a free form surface
-    qs = getroughfilteredpoints(plane)
+    qs = getroughfilteredpoints(feature)
     qiter = 1:length(qs)
 
     # register distance variable:
-    dz = @variable(model, [qiter], base_name = string("d_z_", getfeaturename(plane)))
+    dz = @variable(model, [qiter], base_name = string("d_z_", featurename(feature)))
 
-    pzn = partzeroname(plane)
-    v_machined = getmachinedfeaturepoint(plane)
+    pzn = partzeroname(feature)
+    v_machined_ = machinedfeaturepoint(feature)
+    v_machined = [v_machined_.coords.coords...]
     # equation (4)
-    for (i, q) in enumerate(qs)
+    for (i, qmeshes) in enumerate(qs)
+        q = [qmeshes.coords.coords...]
         d_f = @expression(model, HV(v_machined)-ipzmatricedict[pzn]*HV(q))
         # equation (5)
         @constraint(model, dz[i] == d_f[3])
@@ -102,31 +107,39 @@ end
 
 function addtolerances2model!(model, mop::MultiOperationProblem, pzmatricedict)
     for (i, t) in enumerate(mop.tolerances)
+        function fpointexpr(feature::RoughFeature)
+            v_ = featurepoint(feature)
+            v = [v_.coords.coords...]
+            return @expression(model, v)
+        end
+        function fpointexpr(feature::MachinedFeature)
+            pzn = partzeroname(feature)
+            v_ = featurepoint(feature)
+            v = [v_.coords.coords...]
+            return @expression(model, pzmatricedict[pzn]*HV(v))
+        end
+
         # access registered variables
         AbsValRelError = model[:AbsValRelError]
 
-        # get features and part zero names
-        f1 = getfeaturebyname(mop, t.featurename1)
-        f2 = getfeaturebyname(mop, t.featurename2)
-        @assert ! isnothing(f1) "Feature $(t.featurename1) does not exist!"
-        @assert ! isnothing(f2) "Feature $(t.featurename1) does not exist!"
-        pzn1 = partzeroname(f1)
-        pzn2 = partzeroname(f2)
-
         # equation (2)
-        v1 = @expression(model, t.ismachined1 ? pzmatricedict[pzn1]*HV(getmachinedfeaturepoint(f1)) : getroughfeaturepoint(f1))
-        v2 = @expression(model, t.ismachined2 ? pzmatricedict[pzn2]*HV(getmachinedfeaturepoint(f2)) : getroughfeaturepoint(f2))
+        v1 = fpointexpr(datumfeature(t))
+        v2 = fpointexpr(tolerancefeature(t))
         e_t = @expression(model, v1[1:3]-v2[1:3])
-        real_d = @expression(model, t.projection(e_t))
+        pa = projectionaxis(t)
+        real_d = @expression(model, dot(pa, e_t))
 
         # tolerance should be in interval if set to be used
+        # get lower and upper values
+        lv = minimumvalue(t)
+        uv = maximumvalue(t)
         if mop.parameters["UseTolerances"]
             # equation (3)
-            @constraint(model, t.lowervalue <= real_d <= t.uppervalue)
+            @constraint(model, lv <= real_d <= uv)
         end
         # equation (1)
-        abs_dist = @expression(model, real_d - (t.lowervalue+t.uppervalue)/2)
-        rel_dist = @expression(model, 2*abs_dist/(t.uppervalue-t.lowervalue))
+        abs_dist = @expression(model, real_d - (lv+uv)/2)
+        rel_dist = @expression(model, 2*abs_dist/(uv-lv))
         @constraint(model, rel_dist <= AbsValRelError[i])
         @constraint(model, rel_dist >= -1*AbsValRelError[i])
     end
@@ -157,10 +170,6 @@ function createjumpmodel(mop::MultiOperationProblem, optimizer; disable_string_n
     pzmatrices = [vcat(hcat(pz.rotation, pzpose[i,1:3]), [0 0 0 1]) for (i, pz) in enumerate(partzeros)]
     pzmatricedict = Dict([(partzeros[i].name, pzmatrices[i]) for i in pzr])
 
-    # holes that have machined state
-    machinedholes = collectallowancedholes(mop)
-    # planes that have machined state
-    machinedplanes = collectallowancedplanes(mop)
     # numer of tolerances
     ntolerances = length(mop.tolerances)
     
@@ -175,14 +184,11 @@ function createjumpmodel(mop::MultiOperationProblem, optimizer; disable_string_n
     ## tolerances
     addtolerances2model!(model, mop, pzmatricedict)
 
-    # allowance for holes
-    for h in machinedholes
-        addhole2model!(model, h, ipzmatricedict)
+    # allowances
+    for f in mop.features
+        addallowancedfeature2model!(model, f, ipzmatricedict)
     end
-    # allowance for planes
-    for p in machinedplanes
-        addplane2model!(model, p, ipzmatricedict)
-    end
+
     # if maximum allowance of planes is given, then set it
     if haskey(mop.parameters, "maxPlaneZAllowance")
         @assert mop.parameters["maxPlaneZAllowance"] > mop.parameters["minAllowance"] "Maximum plane z allowance must be larger, than minimum allowance!"

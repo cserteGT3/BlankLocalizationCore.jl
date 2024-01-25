@@ -68,7 +68,7 @@ include("partzeros.jl")
 include("geometries.jl")
 include("tolerances.jl")
 include("optimizationproblem.jl")
-#include("optimization.jl")
+include("optimization.jl")
 #include("resultevaluation.jl")
 #include("visualization.jl")
 

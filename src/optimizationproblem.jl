@@ -27,11 +27,6 @@ end
     MultiOperationProblem
 
 A type storing all geometry data and parameters to generate a JuMP model.
-
-The elements of `features` can only be `HoleLocalizationFeature`s and `PlaneLocalizationFeature`s.
-Otherwise the JuMP model building fails.
-
-The features in tolerances ([`LocalizationTolerance`](@ref)) can be `nothing`, if needed.
 """
 mutable struct MultiOperationProblem
     partzeros::Vector{PartZero}

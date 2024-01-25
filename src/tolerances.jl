@@ -80,7 +80,7 @@ struct ProjectedDimensionTolerance <: AbstractTolerance
     nominalval
     minval
     maxval
-    projection
+    projectionaxis
 end
 
 function Base.show(io::IO, t::ProjectedDimensionTolerance)
@@ -89,11 +89,11 @@ function Base.show(io::IO, t::ProjectedDimensionTolerance)
 end
 
 """
-    projection(t::ProjectedDimensionTolerance)
+    projectionaxis(t::ProjectedDimensionTolerance)
 
-Return the projection function of `t`.
+Return the projection axis of `t`.
 """
-projection(t::ProjectedDimensionTolerance) = t.projection
+projectionaxis(t::ProjectedDimensionTolerance) = t.projectionaxis
 
 
 #=
