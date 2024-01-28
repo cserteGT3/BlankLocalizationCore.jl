@@ -55,19 +55,20 @@ function addallowancedfeature2model!(::FreeForm, ::Cylindrical, model, feature, 
     minAllowance = model[:minAllowance]
     
     # filtered surface points of a free form surface
+    @show feature
     qs = roughfilteredsurfacepoints(feature)
     qiter = 1:length(qs)
     
     # register distance variable:
-    dxy = @variable(model, [qiter], base_name = string("d_xy_", getfeaturename(feature)), lower_bound = 0.0)
+    dxy = @variable(model, [qiter], base_name = string("d_xy_", featurename(feature)), lower_bound = 0.0)
     
     pzn = partzeroname(feature)
     v_machined_ = machinedfeaturepoint(feature)
     v_machined = [v_machined_.coords.coords...]
     r_machined = machinedradius(feature)
     # equation (4)
-    for (i, qmeshes) in enumerate(qs)
-        q = [qmeshes.coords.coords...]
+    for (i, q) in enumerate(qs)
+        #q = [qmeshes.coords.coords...]
         d_f = @expression(model, HV(v_machined)-ipzmatricedict[pzn]*HV(q))
         # equation (5)
         @constraint(model, dxy[i]*dxy[i] >= d_f[1]*d_f[1] + d_f[2]*d_f[2])
@@ -83,7 +84,7 @@ function addallowancedfeature2model!(::FreeForm, ::Planar, model, feature, ipzma
     maxPlaneZAllowance = model[:maxPlaneZAllowance]
 
     # filtered surface points of a free form surface
-    qs = getroughfilteredpoints(feature)
+    qs = roughfilteredsurfacepoints(feature)
     qiter = 1:length(qs)
 
     # register distance variable:
@@ -93,8 +94,8 @@ function addallowancedfeature2model!(::FreeForm, ::Planar, model, feature, ipzma
     v_machined_ = machinedfeaturepoint(feature)
     v_machined = [v_machined_.coords.coords...]
     # equation (4)
-    for (i, qmeshes) in enumerate(qs)
-        q = [qmeshes.coords.coords...]
+    for (i, q) in enumerate(qs)
+        #q = [qmeshes.coords.coords...]
         d_f = @expression(model, HV(v_machined)-ipzmatricedict[pzn]*HV(q))
         # equation (5)
         @constraint(model, dz[i] == d_f[3])

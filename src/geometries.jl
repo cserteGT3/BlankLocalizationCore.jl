@@ -85,8 +85,11 @@ RepresentationStyle(g::MeshPlane) = FreeForm()
 FeatureStyle(g::MeshPlane) = Planar()
 
 surfacepoints(g::MeshPlane) = vertices(g.geom)
-filteredsurfacepoints(g::MeshPlane) = vertices(g.geom)
 
+function filteredsurfacepoints(g::MeshPlane)
+    bb = boundingbox(vertices(g.geom))
+    return [[bb.min.coords.coords...], [bb.max.coords.coords...]]
+end
 
 
 
@@ -115,13 +118,26 @@ end
 """
     surfacepoints(f::AbstractFeature)
 
-Return the points of the surface of an [`FreeForm`](@ref) geometry.
+Return the points of the surface of a [`FreeForm`](@ref) geometry.
 """
 surfacepoints(f::AbstractFeature) = surfacepoints(RepresentationStyle(f), f)
 
 surfacepoints(::FreeForm, f) = surfacepoints(geometry(f))
 
 function surfacepoints(::Primitive, f)
+    error("Function `surfacepoints` is not defined for `Primitive` features.")
+end
+
+"""
+    filteredsurfacepoints(f::AbstractFeature)
+
+Return the filtered points of the surface of a [`FreeForm`](@ref) geometry.
+"""
+filteredsurfacepoints(f::AbstractFeature) = filteredsurfacepoints(RepresentationStyle(f), f)
+
+filteredsurfacepoints(::FreeForm, f) = filteredsurfacepoints(geometry(f))
+
+function filteredsurfacepoints(::Primitive, f)
     error("Function `surfacepoints` is not defined for `Primitive` features.")
 end
 
