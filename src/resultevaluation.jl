@@ -11,8 +11,8 @@ function computeallowance(::IsPrimitive, hole::HoleLocalizationFeature)
 
     if hasmachined(hole) & hasrough(hole)
         v_mlocal = getmachinedfeaturepoint(hole)
-        pz = getpartzero(hole)
-        T_inv = getpartzeroinverseHM(pz)
+        pz = partzero(hole)
+        T_inv = partzeroinverseHM(pz)
         d_f = HV(v_mlocal) - T_inv*HV(v_r)
         xydist = norm(d_f[1:2])
         rallowance = r_m - r_r - xydist
@@ -35,8 +35,8 @@ function computeallowance(::IsFreeForm, hole::HoleLocalizationFeature)
         qs = getroughfilteredpoints(hole)
         rallowances = zeros(Float64, size(qs))
         
-        pz = getpartzero(hole)
-        T_inv = getpartzeroinverseHM(pz)
+        pz = partzero(hole)
+        T_inv = partzeroinverseHM(pz)
         v_mlocal = getmachinedfeaturepoint(hole)
         for (i, q) in enumerate(qs)
             d_f = HV(v_mlocal) - T_inv*HV(q)
@@ -64,8 +64,8 @@ function computeallowance(::IsPrimitive, plane::PlaneLocalizationFeature)
 
     if hasmachined(plane) & hasrough(plane)
         v_mlocal = getmachinedfeaturepoint(plane)
-        pz = getpartzero(plane)
-        T_inv = getpartzeroinverseHM(pz)
+        pz = partzero(plane)
+        T_inv = partzeroinverseHM(pz)
         d_f = HV(v_mlocal) - T_inv*HV(v_r)
         zdist = d_f[3]
         axallowance = -1*zdist
@@ -86,8 +86,8 @@ function computeallowance(::IsFreeForm, plane::PlaneLocalizationFeature)
         qs = getroughfilteredpoints(plane)
         axallowances = zeros(Float64, size(qs))
         
-        pz = getpartzero(plane)
-        T_inv = getpartzeroinverseHM(pz)
+        pz = partzero(plane)
+        T_inv = partzeroinverseHM(pz)
         v_mlocal = getmachinedfeaturepoint(plane)
         for (i, q) in enumerate(qs)
             d_f = HV(v_mlocal) - T_inv*HV(q)
@@ -125,7 +125,7 @@ function allowancetable(mop::MultiOperationProblem)
         xydist = htuple.xydistance
         rallowance = htuple.rallowance
 
-        push!(df, [getfeaturename(h), getpartzeroname(h), v_m[1], v_m[2], v_m[3], v_r[1],
+        push!(df, [getfeaturename(h), partzeroname(h), v_m[1], v_m[2], v_m[3], v_r[1],
             v_r[2], v_r[3], r_m, r_r, xydist, nothing, rallowance, nothing])
     end
     # planes
@@ -137,7 +137,7 @@ function allowancetable(mop::MultiOperationProblem)
         axallowance = ptuple.axallowance
         
 
-        push!(df, [getfeaturename(p), getpartzeroname(p), v_m[1], v_m[2], v_m[3], v_r[1],
+        push!(df, [getfeaturename(p), partzeroname(p), v_m[1], v_m[2], v_m[3], v_r[1],
             v_r[2], v_r[3], nothing, nothing, nothing, zdist, nothing, axallowance])
     end
     return df
@@ -213,9 +213,9 @@ function tolerancetable(mop::MultiOperationProblem)
         # get features and part zero names
         fname1, fname2 = fnameplusrORm(t)
         f1 = getfeaturebyname(mop, t.featurename1)
-        pzn1 = getpartzeroname(f1)
+        pzn1 = partzeroname(f1)
         f2 = getfeaturebyname(mop, t.featurename2)
-        pzn2 = getpartzeroname(f2)
+        pzn2 = partzeroname(f2)
 
         v1 = t.ismachined1 ? getmachinedfeaturepointindatum(f1) : getroughfeaturepoint(f1)
         v2 = t.ismachined2 ? getmachinedfeaturepointindatum(f2) : getroughfeaturepoint(f2)

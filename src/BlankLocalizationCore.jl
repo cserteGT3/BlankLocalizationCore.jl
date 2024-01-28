@@ -4,40 +4,40 @@ using JuMP
 using DataFrames: DataFrame, names, nrow
 using PrettyTables: pretty_table, ft_nonothing, tf_html_minimalist
 using Rotations: RotMatrix
+import Meshes
 using Meshes: SimpleMesh, vertices, boundingbox, connect, Point3, Vec3, Plane, Cylinder,
-    Rotate, Translate, Disk
+    Rotate, Translate, Disk, top, radius, normal, boundingbox
 using Logging: @warn
-using LinearAlgebra: norm, cross, normalize, normalize!
+using Statistics: mean
+using LinearAlgebra: norm, dot, cross, inv, normalize, normalize!
 using Printf: @sprintf
 
 export  PartZero,
         printpartzeropositions
 
-export  AbstractHoleGeometry,
-        AbstractPlaneGeometry,
-        GeometryStyle,
-        IsPrimitive,
-        IsFreeForm,
+export  RepresentationStyle,
+        FeatureStyle,
+        AbstractLocalizationGeometry,
+        SimpleHole,
+        MeshHole,
+        SimplePlane,
+        MeshPlane,
+        featurepoint,
         surfacepoints,
         filteredsurfacepoints,
-        featurepoint,
         featureradius,
-        visualizationgeometry,
-        SimpleHole,
-        SimplePlane,
-        PlaneAndNormal,
-        MeshHole,
-        MeshPlane,
-        FeatureDescriptor,
-        LocalizationFeature,
-        HoleLocalizationFeature,
-        PlaneLocalizationFeature,
-        localizationfeature,
-        OptimizationResult,
-        Tolerance,
+        RoughFeature,
+        MachinedFeature,
+        LocalizationFeature
+        
+export  PositionTolerance,
+        ConcentrictyTolerance,
+        ProjectedDimensionTolerance,
+        addtolerance2model!
+        
+export  OptimizationResult,
         MultiOperationProblem,
-        setparameters!,
-        isoptimum
+        setparameters!
 
 export  createjumpmodel,
         setjumpresult!,
@@ -66,8 +66,10 @@ HV(v) = vcat(v, 1)
 
 include("partzeros.jl")
 include("geometries.jl")
+include("tolerances.jl")
+include("optimizationproblem.jl")
 include("optimization.jl")
-include("resultevaluation.jl")
+#include("resultevaluation.jl")
 include("visualization.jl")
 
 end
