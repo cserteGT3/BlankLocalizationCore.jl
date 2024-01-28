@@ -25,6 +25,8 @@ nicestr(x::Cylindrical) = "cylindrical"
 
 abstract type AbstractLocalizationGeometry end
 
+visualizationgeometry(g::AbstractLocalizationGeometry) = g.geom
+
 struct SimpleHole <: AbstractLocalizationGeometry
     geom::Meshes.Disk
 end
@@ -54,6 +56,26 @@ RepresentationStyle(g::SimplePlane) = Primitive()
 FeatureStyle(g::SimplePlane) = Planar()
 
 featurepoint(g::SimplePlane) = g.geom(0,0)
+
+randnormal(v) = normalize(cross(v, rand(typeof(v))))
+
+function rectangleforplane(point, v1 ,v2, sidelength)
+    c1 = point + sidelength/2*v1 + -1*sidelength/2*v2
+    c2 = c1 + -1*sidelength*v1
+    c3 = c2 + sidelength*v2
+    c4 = c3 + sidelength*v1
+    return SimpleMesh([c1,c2,c3,c4], connect.([(1,2,3),(3,4,1)]))
+end
+
+function rectangleforplane(plane::Meshes.Plane)
+    o = plane(0,0)
+    n = Meshes.normal(plane)
+    v1 = randnormal(n)
+    v2 = cross(v1, n)
+    return rectangleforplane(o, v1, v2, 20)
+end
+
+visualizationgeometry(plane::SimplePlane) = rectangleforplane(plane.geom)
 
 struct MeshPlane <: AbstractLocalizationGeometry
     geom #::Meshes.Mesh, but that is abstract

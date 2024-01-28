@@ -6,7 +6,7 @@ using PrettyTables: pretty_table, ft_nonothing, tf_html_minimalist
 using Rotations: RotMatrix
 import Meshes
 using Meshes: SimpleMesh, vertices, boundingbox, connect, Point3, Vec3, Plane, Cylinder,
-    Rotate, Translate, Disk, top, radius
+    Rotate, Translate, Disk, top, radius, normal
 using Logging: @warn
 using Statistics: mean
 using LinearAlgebra: norm, dot, cross, inv, normalize, normalize!
@@ -70,6 +70,6 @@ include("tolerances.jl")
 include("optimizationproblem.jl")
 include("optimization.jl")
 #include("resultevaluation.jl")
-#include("visualization.jl")
+include("visualization.jl")
 
 end
