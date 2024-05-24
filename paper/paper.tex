@@ -11,53 +11,54 @@
 
 \begin{abstract}
 
-Blank localization (also known as workpiece referencing) is an essential task when machining parts.
-In this step the geometric relation of the tool of a machine (mill, lathe etc.) and the workpiece(s) needs to be precisely defined/searched. We introduced the concept of multi operation blank localization to address this task for drilling and milling scenarios in a mostly automated way.
-The heart of the procedure is a convex quadratically constrained quadratic program (QCQP).
-To easily access the solver, the BlankLocalizationCore.jl package was developed.
-Its flexibility and extensibility make it an excellent research tool, that can be deployed in production as well.
+Blank localization (also known as workpiece referencing) is an essential task in machining.
+In this step the geometric relation of the tool of a machine (mill, lathe etc.) and the workpiece(s) needs to be precisely defined/searched.
+We introduced the concept of multi operation blank localization to address this task for drilling and milling scenarios in a semi-automated way.
+It processes measurement of the rough geometry and the machining CNC code to solve a convex quadratically constrained quadratic program (QCQP).
+It gives an optimal solution for given machining allowance - tolerance error, providing a tool for the machinist to find the appropriate balance between the two.
+The flexibility and extensibility of the Julia language helped the development of this algorithm, materializing in the \pkg{BlankLocalizationCore} package.
+Its flexibility and ease of use make it an excellent research tool, that can be deployed in production as well.
 
 \end{abstract}
 
 \section{Introduction}
 
-The \LaTeX{} document preparation system is a special version of the
-\TeX; typesetting program where-in a collection of \TeX; commands
-are added to \LaTeX{} to simplify typesetting. Importantly, it allows
-the author to concentrate on the logical structure of the document
-rather than its visual layout.\vskip 6pt
-Moreover, \LaTeX{} provides a consistent and comprehensive document
-preparation interface. There are simple-to-use commands for
-generating a table of contents, lists of figures and/or tables, and indexes.
-\LaTeX{} can automatically number list entries, equations, figures,
-tables, and footnotes, as well as articles, sections, and subsections.
-Using this numbering system, bibliographic citations, page
-references, and cross references to any other numbered entity (e.g.
-article, section, equation, figure, list entry, etc.) become quite simple
-and straightforward. The use of \LaTeX{} document classes allows
-a simple change of class to transform the appearance of your document.\vskip 6pt
-\LaTeX{} is a powerful tool for managing long and complex documents.
-In particular, partial processing enables long documents to
-be produced article by article without losing sequential information.
-The use of document classes allows a simple change of style
-(or style option) to transform the appearance of your document.
+Cast parts can have small geometric variations from lot-to-lot, therefore it is required to alter the machining CNC code to adapt it to each lot.
+Current practices include human work (long, possible scrap, needs highly trained workers), and automated methods for parts like wind turbines (measurement of the whole part, mini-max/maxi-min optimizations for large free form surfaces).
+The multi operation blank localization method is introduced to focus on drilling and milling scenarios covering a wide range of suitable parts.
+To better understand the package, a short description of the multi operation blank localization algorithm is given.
+The algorithm needs to balance between machining allowance and tolerance error.
+Machining allowance is calculated for each feature as the smallest thickness of the material to be removed.
+Tolerance error is defined for each dimensional tolerance record, that is defined between to features.
+Their distance has a nominal value and upper-lower bounds.
+The goal of the algorithm is to keep the tolerance distances close to the nominal value, while keeping a minimum machining allowance value.
 
 
 
-\section{The JuliaCon Article Class}
-\label{sec:documentclass}
+
+\section{Approach}
+\label{sec:approach}
 %
-The juliacon class file preserves the standard LATEX{} interface such
-that any document that can be produced using the standard LATEX{}
-article class can also be produced with the class file.\vskip 6pt
-It is likely that the make up will change after file submission. For
-this reason, we ask you to ignore details such as slightly long lines,
-page stretching, or figures falling out of synchronization, as these
-details can be dealt with at a later stage.\vskip 6pt
-Use should be made of symbolic references (\verb|\ref| ) in order to
-protect against late changes of order, etc.
+The package needs to support the quick prototyping needs of research, while giving a strong/stable baseline/background to validate the concept in the industry as well (high-level, programozói igények nélkül, amit egy menedzser felsorolna):
 
-\section{USING THE JuliaCon Article CLASS FILE}
+\begin{itemize}
+	\item Model the problem, including geometry representation, qcqp model building and solving, evaluation, visualization.
+	\item Modeling the different behavious of the geometries (holes, planes)
+	\item Handle two basic types of measurements: primitive or free-form.
+	\item Support for importing geometries: all kinds of measurement (expandable/extendable? type system for introducing new measurement types)
+\end{itemize}
+
+Tasks are defined in the workpiece coordinate frame (called workpiece datum).
+Two types of geometries need to be aligned: rough and machined. Currently the algorithm, thus the implementation supports two types of features: holes and planes. 
+A flexible type system is implemented: abstract types are defined and all methods act on them, so implementing a new geometry type (for example to handle point cloud measurement of a rough hole) means defining the type and those methods.
+All other functionality of the package are working automatically: setting up the optimization model, solving it, evaluating the results in details and visualizing the geometries.
+
+\section{Results}
+The following figures show the same part measured with different techniques, such as laser scanner and coordinate measurement arm.
+Based on the package, geometries for both measurement types can be implemented in just a few lines, and the optimization can be run on them.
+Two papers have been published using this tool \cite{cserteg:2023_Annals} for primitive types and \cite{cserteg:2023_CMS} for free-form surfaces.
+
+\section{}
 
 If the file \verb|juliacon.cls|  is not already in the appropriate system directory
 for \LaTeX{} files, either arrange for it to be put there or copy
