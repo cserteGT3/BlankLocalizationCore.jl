@@ -12,533 +12,143 @@
 \begin{abstract}
 
 Blank localization (also known as workpiece referencing) is an essential task in machining.
-In this step the geometric relation of the tool of a machine (mill, lathe etc.) and the workpiece(s) needs to be precisely defined/searched.
+In this step the geometric relation of the tool of a machine (mill, lathe etc.) and the workpiece(s) needs to be precisely established.
 We introduced the concept of multi operation blank localization to address this task for drilling and milling scenarios in a semi-automated way.
-It processes measurement of the rough geometry and the machining CNC code to solve a convex quadratically constrained quadratic program (QCQP).
-It gives an optimal solution for given machining allowance - tolerance error, providing a tool for the machinist to find the appropriate balance between the two.
-The flexibility and extensibility of the Julia language helped the development of this algorithm, materializing in the \pkg{BlankLocalizationCore} package.
+The method processes measurement of the rough geometry and the machining CNC code to solve a convex quadratically constrained quadratic program (QCQP).
+It gives an optimal solution for given machining allowance--tolerance error, providing a tool for the machinist to find the appropriate balance between the two.
+The versatility and extensibility of the Julia language helped the development of this algorithm, materializing in the \texttt{BlankLocalizationCore.jl} package.
 Its flexibility and ease of use make it an excellent research tool, that can be deployed in production as well.
-
 \end{abstract}
 
 \section{Introduction}
+\label{sec:intro}
+Cast parts may have small geometric variations from lot-to-lot, that need to be addressed before machining by altering the CNC code.
+Current practices include human effort, which takes long time, possibly produces scrap and requires highly trained workers.
+Automated methods exist for complex free-form parts like wind turbines, that are based on the measurement of the rough part and generate the machining code by mini-max/maxi-min optimization (\cite{tan:2014_UnconstrainedApproachBlank}, \cite{ding:2021_CoarsefineOptimizationMethod}).
+Multi operation blank localization was introduced in~\cite{cserteg:2023_Annals} focusing on drilling and milling.
+These machining operations are among the most used ones, therefore the method is applicable for a wide range of products.
+The method and its implementation was developed together, which required a language with support of easy prototyping and wide variety of tools.
+For exactly these reasons chose we the Julia language~\cite{bezanson2017julia}.
 
-Cast parts can have small geometric variations from lot-to-lot, therefore it is required to alter the machining CNC code to adapt it to each lot.
-Current practices include human work (long, possible scrap, needs highly trained workers), and automated methods for parts like wind turbines (measurement of the whole part, mini-max/maxi-min optimizations for large free form surfaces).
-The multi operation blank localization method is introduced to focus on drilling and milling scenarios covering a wide range of suitable parts.
-To better understand the package, a short description of the multi operation blank localization algorithm is given.
-The algorithm needs to balance between machining allowance and tolerance error.
+%TODO: ez túl sok helyet foglal
+\iffalse
+The paper is structured as follows: the multi operation blank localization algorithm is introduced briefly in Sec.~\ref{sec:algo}, followed by the requirements and needs showed up during development in Sec.~\ref{sec:req} and the solutions of those problems in Sec.~\ref{sec:approach}.
+Finally a short example is given in Sec.~\ref{sec:results} and the paper is concluded in Sec.~\ref{sec:conclusion}.
+\fi
+
+\section{Multi operation blank localization}
+\label{sec:algo}
+
+The goal of the algorithm is to find the optimal part zero for each feature group of a workpiece.
+These feature groups could be for example drilled holes on the same side of the part, whose drilling positions are defined relative to a common reference (the part zero).
+Features in a feature group can moved only together as a group, but feature groups can be moved separately.
+The to-be-machined features (short: machined features) need to be aligned with the előgyártmány feauterök (called rough features) in a way, that a minimum machining allowance is ensured and the distance tolerance between features is respected.
+Former encodes the requirement, that material needs to be removed to ensure proper surface finish and is described for a feature as the smallest thickness of material to be removed.
+The distance tolerance between features is modeled as a lower-upper bound for the distance of two features.
+As feature groups move together, only inter-group tolerances need to be considered.
+Fig.~\ref{fig:hatfig} shows two feature groups with their part zeros as well as the tolerances between features.
+
+\begin{figure}[b]
+	\centerline{\includegraphics[width=0.9\columnwidth]{cirp-annals-2023-figure-2.png}}
+	\caption{Measured part with two machined feature groups and tolerances between them. $r^M$ and $r^R$ denote the machined and rough radii of a feature, while $\delta$ the machining allowance \cite{cserteg:2023_Annals}.}
+	\label{fig:hatfig}
+\end{figure}
+
+Inputs of the algorithm are the measurements of the rough part, the machining CNC code for each feature (relative to the corresponding part zero), the tolerance ranges for the features and the minimum machining allowance parameter.
+The output will be the position of the optimal part zeros, where optimal means the lowest average tolerance error at the given allowance value.
+
+Measurements of the rough parts can be obtained with a variety of instruments, including coordinate measurement machines (CMM), laser scanners, measurement arms, etc.
+The two main representations that these devices create are primitive geometries (cylinders, planes, etc.) and free-form geometries in the form of point cloud or triangulated mesh.
+These measurements are fed into the optimization model, which is a convex quadratically constrained quadratic program (QCQP).
+Details of the optimization model can be found in the papers \cite{cserteg:2023_Annals} and \cite{cserteg:2023_CMS}.
+%TODO: ide kéne még egy bekezdés arról, hogy mi is a modell?
+% a mérések alapján -> QCQP ????
+% a free-form / primitive-ről sem írtam még
+
+\iffalse
+The method gives engineers a tool to balance between machining allowance and tolerance error.
+Former is 
 Machining allowance is calculated for each feature as the smallest thickness of the material to be removed.
 Tolerance error is defined for each dimensional tolerance record, that is defined between to features.
 Their distance has a nominal value and upper-lower bounds.
 The goal of the algorithm is to keep the tolerance distances close to the nominal value, while keeping a minimum machining allowance value.
-
-
-
+\fi
 
 \section{Approach}
 \label{sec:approach}
-%
-The package needs to support the quick prototyping needs of research, while giving a strong/stable baseline/background to validate the concept in the industry as well (high-level, programozói igények nélkül, amit egy menedzser felsorolna):
+
+During the development of the algorithm, we needed an environment (package) that supports the quick prototyping needs of research, while giving a stable background to validate the concept with our industry partner as well.
+These needs include:
+% (high-level, programozói igények nélkül, amit egy menedzser felsorolna):
 
 \begin{itemize}
-	\item Model the problem, including geometry representation, qcqp model building and solving, evaluation, visualization.
-	\item Modeling the different behavious of the geometries (holes, planes)
-	\item Handle two basic types of measurements: primitive or free-form.
-	\item Support for importing geometries: all kinds of measurement (expandable/extendable? type system for introducing new measurement types)
+	\item A versatile type system for geometry representation. Especially regarding the differences of drilling/milling operations and free-form/primitive geometry representation.
+	\item Easy-to-use interface for the optimization model.
+	\item Support for importing geometries from a variety of measurement tools (CMM, laser scanner, measurement arm).
+	\item Support for debugging, analyzing and visualizing the results.
+%	\item Handling the differences of drilling and milling (hole and plane geometries).	
+%	\item Model the problem, including geometry representaton, qcqp model building and solving, evaluation, visualization.
+%	\item Modeling the different behavious of the geometries (holes, planes)
+%	\item Handle two basic types of measurements: primitive or free-form.
+%	\item Support for importing geometries: all kinds of measurement (expandable/extendable? type system for introducing new measurement types)
 \end{itemize}
 
+A flexible type system is designed to handle the different representations of geometries and features.
+Abstract hole and plane geometries model the drilling and milling operations, while traits describe if a feature is using a free-form or a primitive representation.
+An internal API (set of functions) is designed to access the relevant properties of the geometries (center point, radius, surface points, etc.).
+
+This internal API is used when constructing the optimization model, utilizing the JuMP ecosystem~\cite{Lubin2023}.
+With JuMP's excellent design, coding the optimization model was as easy as repeating the mathematical model in Julia.
+Other advantage of the JuMP ecosystem is, that solvers can be easily swapped out if needed.
+For development, the FICO Xpress solver was used (with academic license), but our industry partner could use the Ipopt or SCIP solvers without issue.
+Using the internal API gives the advantage, that new geometry representations can be quickly used with the optimization model by just implementing a new type and a set of functions.
+
+As mentioned earlier, important requirement was to handle the output formats of many different devices.
+Every measurement instrument comes with its own processing software and export formats, not necessarily designed for interoperability.
+As a result, we needed to write (or use) parsers for different text and tabular formats.
+%The measurement results are read into their own respective type that implements the internal API, which means that 
+
+The geometric computations are implemented with the help of the \texttt{Meshes.jl} package, which enabled us to easily visualize the geometries and results from the beginnings.
+See Fig.~\ref{fig:hatfig} for an example.
+
+
+\iffalse
 Tasks are defined in the workpiece coordinate frame (called workpiece datum).
 Two types of geometries need to be aligned: rough and machined. Currently the algorithm, thus the implementation supports two types of features: holes and planes. 
 A flexible type system is implemented: abstract types are defined and all methods act on them, so implementing a new geometry type (for example to handle point cloud measurement of a rough hole) means defining the type and those methods.
 All other functionality of the package are working automatically: setting up the optimization model, solving it, evaluating the results in details and visualizing the geometries.
-
-\section{Results}
-The following figures show the same part measured with different techniques, such as laser scanner and coordinate measurement arm.
-Based on the package, geometries for both measurement types can be implemented in just a few lines, and the optimization can be run on them.
-Two papers have been published using this tool \cite{cserteg:2023_Annals} for primitive types and \cite{cserteg:2023_CMS} for free-form surfaces.
-
-\section{}
-
-If the file \verb|juliacon.cls|  is not already in the appropriate system directory
-for \LaTeX{} files, either arrange for it to be put there or copy
-it to your working directory. The \verb|juliacon|  document class is implemented
-as a complete class, not a document style option. In order to
-use the \verb|juliacon  document class, replace \verb|article|  by \verb|juliacon|  in the
-\verb|\documentclass|  command at the beginning of your document:
-\vskip 6pt
-\begin{centering}
-    \verb|\documentclass{article}|  \end{centering}
-\vskip 6pt
-replace by
-\vskip 6pt
- \verb|\documentclass{juliacon}|  \vskip 6pt
-In general, the following standard document \verb|style|  options should
-{ \itshape not} be used with the {\footnotesize \itshape article} class file:
-\begin{enumerate}
-\item[(1)] \verb|10pt|,  \verb|11pt|,  \verb|12pt|   ? unavailable;
-\item[(2)] \verb|twoside|  (no associated style file) ? \verb|twoside|  is the default;
-\item[(3)] \verb|fleqn|, \verb|leqno|, \verb|titlepage| ? should not be used;
-\end{enumerate}
-
-\section{Additional Document Style Options}
-\label{sec:additional_doc}
-%
-The following additional style option is available with the \verb|juliacon|  class file:
-\vskip 6pt
-Please place any additional command definitions at the very start of
-the \LaTeX{} file, before the \verb|\begin{document}|. For example, user-defined
-\verb|\def|  and \verb|\newcommand|   commands that define macros for
-technical expressions should be placed here. Other author-defined
-macros should be kept to a minimum.
-\vskip 6pt
-Commands that differ from the standard \LaTeX{} interface, or that
-are provided in addition to the standard interface, are explained in
-this guide. This guide is not a substitute for the \LaTeX{} manual itself.
-Authors planning to submit their papers in \LaTeX{} are advised to use
-\verb|juliacon.cls|  as early as possible in the creation of their files.
-
-%
-%
-%
-%
-\begin{table*}[t]
-\tabcolsep22pt
-\tbl{If necessary, the tables can be extended both columns.}{
-\begin{tabular}{|l|l|c|c|}\hline
-Label & \multicolumn{1}{c|}{Description}
-& Number of Users &
-Number of Queries\\\hline
-Test 1 & Training Data &
-\smash{\raise-7pt\hbox{70}} & 104\\
-\cline{1-2}\cline{4-4}
-Test 2 & Testing Data I & & 105\\\hline
-Test 3 & Testing Data II & 30 & 119\\\hline
-& Total & 100 & 328\\\hline
-\end{tabular}}
-\label{tab:symbols}
-\begin{tabnote}
-This is an example of table footnote.
-\end{tabnote}
-\end{table*}
-% \begin{figure*}[t]
-% \centerline{\includegraphics[width=11cm]{juliagraphs.png}}
-% \caption{If necessary, the images can be extended both columns.}
-%   \label{fig:sample_image}
-% \end{figure*}
-
-\section{Additional features}
-\label{sec:additional_faci}
-In addition to all the standard \LaTeX{} design elements, the \verb|juliacon|  class file includes the following features:
-In general, once you have used the additional \verb|juliacon.cls| facilities
-in your document, do not process it with a standard \LaTeX{} class
-file.
-
-\subsection{Titles, Author's Name, and Affiliation}
-\label{subsub:title_auth}
-The title of the article, author's name, and affiliation are used at the
-beginning of the article (for the main title). These can be produced
-using the following code:
-
-\begin{verbatim}
-\title{ This is an example of article title} }
-\author{
-   \large 1st Author \\[-3pt]
-   \normalsize 1st author's affiliation  \\[-3pt]
-    \normalsize 1st line of address \\[-3pt]
-    \normalsize 2nd line of address \\[-3pt]
-    \normalsize	1st author's email address \\[-3pt]
-  \and
-   \large 2nd Author \\[-3pt]
-   \normalsize 2nd author's affiliation  \\[-3pt]
-    \normalsize 1st line of address \\[-3pt]
-    \normalsize 2nd line of address \\[-3pt]
-    \normalsize	2nd author's email address \\[-3pt]
-\and
-   \large 3rd Author \\[-3pt]
-   \normalsize 3rd author's affiliation  \\[-3pt]
-    \normalsize 1st line of address \\[-3pt]
-    \normalsize 2nd line of address \\[-3pt]
-    \normalsize	3rd author's email address \\[-3pt]
-}
-\maketitle
-\end{verbatim}
-
-\subsection{Writing Julia code}
-
-A special environment is already defined for Julia code,
-built on top of \textit{listings} and \textit{jlcode}.
-
-\begin{verbatim}
-\begin{lstlisting}[
-    language = Julia, 
-    numbers=left, 
-    label={lst:exmplg}, 
-    caption={Example Code Block.}
-]
-using Plots
-
-x = -3.0:0.01:3.0
-y = rand(length(x))
-plot(x, y)
-\end{lstlisting}
-\end{verbatim}
-\begin{lstlisting}[
-    language = Julia, 
-    numbers=left, 
-    label={lst:exmplg}, 
-    caption={Example Code Block.}
-]
-using Plots
-
-x = -3.0:0.01:3.0
-y = rand(length(x))
-plot(x, y)
-\end{lstlisting}
+\fi
 
 
-\subsection{Abstracts, Key words, term etc...}
-\label{subsub:abs_key_etc}
+\section{Results and future work} %TODO: or Example
+\label{sec:results}
 
-At the beginning of your article, the title should be generated
-in the usual way using the \verb|\maketitle|  command. For genaral tem and keywords use
-\verb|\terms|,
-\verb|\keywords|  commands respectively. The abstract should be enclosed
-within an abstract environment, All these environment
-can be produced using the following code:
-\begin{verbatim}
-\terms{Experimentation, Human Factors}
+Fig.~\ref{fig:pareto} shows the allowance-tolerance pairs for an experiment from our paper.
 
-\keywords{Face animation, image-based modelling...}
-
-\begin{abstract}
-In this paper, we propose a new method for the
-systematic determination of the model's base of
-time varying delay system. This method based on
-the construction of the classification data related
-to the considered system. The number, the orders,
-the time delay and the parameters of the local
-models are generated automatically without any
-knowledge about the full operating range of the
-process. The parametric identification of the local
-models is realized by a new recursive algorithm for
-on line identification of systems with unknown time
-delay. The proposed algorithm allows simultaneous
-estimation of time delay and parameters of
-discrete-time systems. The effectiveness of
-the new method has been illustrated through
-simulation.
-\end{abstract}
-
-\end{verbatim}
-
-\section{Some guidelines}
-\label{sec:some_guide}
-The following notes may help you achieve the best effects with the
-\verb|juliacon|  class file.
-
-\subsection{Sections}
-\label{subsub:sections}
-\LaTeXe{}  provides four levels of section headings and they are all
-defined in the \verb|juliacon|  class file:
-\begin{itemize}
-\item \verb|\section|
-\item \verb|\subsection|
-\item \verb|\subsubsection|
-\item \verb|\paragraph|
-\end{itemize}
-Section headings are automatically converted to allcaps style.
-\subsection{Lists}
-\label{sec:lists}
-%
-The \verb|juliacon|   class file provides unnumbered lists using the
-\verb|unnumlist|  environment for example,
-
-\begin{unnumlist}
-\item First unnumbered item which has no label and is indented from the
-left margin.
-\item Second unnumbered item.
-\item Third unnumbered item.
-\end{unnumlist}
-The unnumbered list which has no label and is indented from the
-left margin. was produced by:
-\begin{verbatim}
-\begin{unnumlist}
-\item First unnumbered item...
-\item Second unnumbered item...
-\item Third unnumbered item...
-\end{unnumlist}
-\end{verbatim}
-
-The \verb|juliacon|  class file also provides hyphen list using the
-\verb|itemize|  environment for example,
-\begin{itemize}
-\item First unnumbered bulleted item which has no label and is indented
-from the left margin.
-\item Second unnumbered bulleted item.
-\item Third unnumbered bulleted item which has no label and is indented
-from the left margin.
-\end{itemize}
-was produced by:
-\begin{verbatim}
-\begin{itemize}
-\item First item...
-\item Second item...
-\item Third item...
-\end{itemize}
-\end{verbatim}
-
-Numbered list is also provided in acmtog class file using the
-enumerate environment for example,
-\begin{enumerate}
-\item The attenuated and diluted stellar radiation.
-\item Scattered radiation, and
-\item Reradiation from other grains.
-\end{enumerate}
-
-was produced by:
-\begin{verbatim}
-\begin{enumerate}
-\item The attenuated...
-\item Scattered radiation, and...
-\item Reradiation from other grains...
-\end{enumerate}
-\end{verbatim}
-\subsection{Illustrations (or figures)}
-\label{subsub:sec_Illus}
-The \verb|juliacon|  class file will cope with most of the positioning of
-your illustrations and you should not normally use the optional positional
-qualifiers on the \verb|figure|  environment that would override
-these decisions.
-\vskip 6pt
-
-%
-\begin{figure}[t]
-\centerline{\includegraphics[width=4cm]{juliagraphs.png}}
-\caption{This is example of the image in a column.}
-	\label{fig:sample_figure}
+\begin{figure}[b]
+	\centerline{\includegraphics[width=0.9\columnwidth]{pareto-new-label.png}}
+	\caption{Balancing the machining allowance and the tolerance error \cite{cserteg:2023_Annals}.}
+	\label{fig:pareto}
 \end{figure}
 
-The figure \ref{fig:sample_figure} is taken from the JuliaGraphs
-organization \footnote{https://github.com/JuliaGraphs}.
 
-Figure captions should be \emph{below} the figure itself, therefore the
-\verb|\caption|  command should appear after the figure or space left for
-an illustration. For example, Figure 1 is produced using the following
-commands:
+Preliminary results were first published in \cite{cserteg:2023_DigitalTwinAssisted}.
+A journal paper describes the original algorithm \cite{cserteg:2023_Annals}, and a conference paper details the modifications for free-form surfaces \cite{cserteg:2023_CMS}.
 
-\begin{verbatim}
-\begin{figure}
-\centerline{\includegraphics[width=20pc]{Graphics.eps}}
-\caption{An example of the testing process for a
-binary tree. The globa null hypothesis is tested
-first at level $\alpha$ (a), and the level of
-individual variables is reached last (d). Note
-that individual hypotheses can be tested at
-level $\alpha/4$ and not $\alpha/8$ as one might
-expect at first.}
-\label{sample-figure_2}
-\end{figure}
-\end{verbatim}
-Figures can be resized using first and second argument of
-\verb|\includegraphics|   command. First argument is used for modifying
-figure height and the second argument is used for modifying
-figure width respectively.
-\vskip 6pt
-Cross-referencing of figures, tables, and numbered, displayed
-equations using the \verb|\label|  and \verb|\ref|   commands is encouraged.
-For example, in referencing Figure 1 above, we used
-\verb|Figure~\ref{sample-figure}|
+Future plans for the package and the method itself include an overhaul of the tolerance modeling scheme.
+Currently only dimensional tolerances are handled, but it should be discovered if more GD\&T tolerances can be incorporated into the model.
+The methodology currently only supports cylinders and planes, thus drilling and milling.
+It is a future research direction to extend the handled machining operations for example to turning.
 
- \subsection{Tables}
-\label{subsub:sec_Tab}
-The \verb|juliacon|   class file will cope with most of the positioning of
-your tables and you should not normally use the optional positional qualifiers on the table environment which would override these
-decisions. Table captions should be at the top.
-\begin{verbatim}
-\begin{table}
-\tbl{Tuning Set and Testing Set}{
-\begin{tabular}{|l|l|c|c|}\hline
-Label & \multicolumn{1}{c|}{Description}
-& Number of Users &
-Number of Queries\\\hline
-Train70 & Training Data &
-\smash{\raise-7pt\hbox{70}} & 104\\
-\cline{1-2}\cline{4-4}
-Test70 & Testing Data I & & 105\\\hline
-Test30 & Testing Data II & 30 & 119\\\hline
-& Total & 100 & 328\\\hline
-\end{tabular}}
-\end{table}
-\end{verbatim}
-
-\begin{table}
-\tbl{Tuning Set and Testing Set}{
-\begin{tabular}{|l|l|c|c|}\hline
-Label & \multicolumn{1}{c|}{Description}
-& Number of Users &
-Number of Queries\\\hline
-Test 1 & Training Data &
-\smash{\raise-7pt\hbox{70}} & 104\\
-\cline{1-2}\cline{4-4}
-Test 2 & Testing Data I & & 105\\\hline
-Test 3 & Testing Data II & 30 & 119\\\hline
-& Total & 100 & 328\\\hline
-\end{tabular}}
-\end{table}
-\subsection{Landscaping Pages}
-\label{subsub:landscaping_pages}
-If a table is too wide to fit the standard measure, it may be turned,
-with its caption, to 90 degrees. Landscape tables cannot be produced
-directly using the \verb|juliacon|   class file because \TeX{} itself cannot
-turn the page, and not all device drivers provide such a facility.
-The following procedure can be used to produce such pages.
-\vskip 6pt
-Use the package \verb|rotating|   in your document and change the coding
-from
-\begin{verbatim}
-\begin{table}...\end{table}
-to
-\begin{sidewaystable}...\end{sidewaystable}
-and for figures
-\begin{figure}...\end{figure}
-to
-\begin{sidewaysfigure}...\end{sidewaysfigure}
-\end{verbatim}
-
-environments in your document to turn your table on the appropriate
-page of your document. For instance, the following code prints
-a page with the running head, a message half way down and the
-table number towards the bottom.
-\begin{verbatim}
-\begin{sidewaystable}
-\tbl{Landscape table caption to go here.}{...}
-\label{landtab}
-\end{sidewaystable}
-\end{verbatim}
-
-\subsection{Double Column Figure and Tables}
-\label{subsub:double_fig_tab}
-For generating the output of figures and tables in double column
-we can use the following coding:
-
-\begin{enumerate}
-\item For Figures:
-\begin{verbatim}
-\begin{figure*}...\end{figure*}
-\end{verbatim}
-\item For landscape figures:
-\begin{verbatim}
-\begin{sidewaysfigure*}...\end{sidewaysfigure*}
-\end{verbatim}
-\item For Tables:
-\begin{verbatim}
-\begin{table*}...\end{table*}
-\end{verbatim}
-\item For landscape tables:
-\begin{verbatim}
-\begin{sidewaystable*}...\end{sidewaystable*}
-\end{verbatim}
-\end{enumerate}
-
-\subsection{Typesetting Mathematics}
-\label{subsub:type_math}
-The \verb|juliacon| class file will set displayed mathematics with center to
-the column width, provided that you use the \LaTeXe{} standard of
-open and closed square brackets as delimiters.
-The equation
-\[
-\sum_{i=1}^p \lambda_i = (S)
-\]
-
-was typeset using the acmtog class file with the commands
-
-\begin{verbatim}
-\[
-\sum_{i=1}^p \lambda_i = (S)
-\]
-\end{verbatim}
-
-For display equations, cross-referencing is encouraged. For example,
-\begin{verbatim}
-\begin{equation}
-(n-1)^{-1} \sum^n_{i=1} (X_i - \overline{X})^2.
-\label{eq:samplevar}
-\end{equation}
-Equation~(\ref{eq:samplevar}) gives the formula for
-sample variance.
-\end{verbatim}
-The following output is generated with the above coding:
-\begin{equation}
-(n-1)^{-1} \sum^n_{i=1} (X_i - \overline{X})^2.
-\label{eq:samplevar}
-\end{equation}
-Equation~(\ref{eq:samplevar}) gives the formula for
-sample variance.
+%TODO: future works
+% - tolerance modeling
+% - discover other machining operations (turning)
+% - add more examples to docs
 
 
-\subsection{Enunciations}
-\label{subsub:enunciation}
-The \verb|juliacon|   class file generates the enunciations with the help of
-the following commands:
-\begin{verbatim}
-\begin{theorem}...\end{theorem}
-\begin{strategy}...\end{strategy}
-\begin{property}...\end{property}
-\begin{proposition}...\end{proposition}
-\begin{lemma}...\end{lemma}
-\begin{example}...\end{example}
-\begin{proof}...\end{proof}
-\begin{definition}...\end{definition}
-\begin{algorithm}...\end{algorithm}
-\begin{remark}...\end{remark}
-\end{verbatim}
-The above-mentioned coding can also include optional arguments
-such as
-\begin{verbatim}
-\begin{theorem}[...]. Example for theorem:
-\begin{theorem}[Generalized Poincare Conjecture]
-Four score and seven ... created equal.
-\end{theorem}
-\end{verbatim}
-
-\begin{theorem}[Generalized Poincare Conjecture]
-Four score and seven years ago our fathers brought forth,
-upon this continent, a new nation, conceived in Liberty,
- and dedicated to the proposition that all men are
-created equal.
-\end{theorem}
-
-
-\subsection{Extract}
-\label{subsub:extract}
-Extract environment should be coded within
-\begin{verbatim}
-\begin{extract}..\end{extract}
-\end{verbatim}
-
-\subsection{Balancing column at last page}
-\label{subsub:Balance}
-For balancing the both column length at last page use :
-\begin{verbatim}
-\vadjust{\vfill\pagebreak}
-\end{verbatim}
-
-%\vadjust{\vfill\pagebreak}
-
-at appropriate place in your \TeX{} file or in bibliography file.
-
-\section{Handling references}
-\label{subsub:references}
-References are most easily (and correctly) generated using the
-BIBTEX, which is easily invoked via
-\begin{verbatim}
-\bibliographystyle{juliacon}
-\bibliography{ref}
-\end{verbatim}
-When submitting the document source (.tex) file to external
-parties, the ref.bib file should be sent with it.
-\cite{bezanson2017julia}
+\section{Acknowledgments}
+%TODO: CMS másolása
+This research has been supported by the National Laboratory for Autonomous Systems RRF-2.3.1-21-2022-00002 and the ED\_18-2-2018-0006 grants of the NRDIO.
 
 \input{bib.tex}
 
