@@ -23,7 +23,7 @@ Its flexibility and ease of use make it an excellent research tool that can be d
 \label{sec:intro}
 Cast parts may have small geometric variations from lot to lot that need to be addressed before machining by altering the CNC code.
 Current practice is dominated by iterative adjustments by the human operator, which requires highly trained workers, takes a long time, and still, may produce scrap.
-Automated methods exist for complex free-form parts like wind turbines that place the entire blank as a single solid object (\cite{tan:2014_UnconstrainedApproachBlank}\cite{ding:2021_CoarsefineOptimizationMethod}).
+Automated methods exist for complex free-form parts like wind turbines that place the entire blank as a single solid object (\cite{ding:2021_CoarsefineOptimizationMethod}\cite{tan:2014_UnconstrainedApproachBlank}).
 Multi-operation blank localization was introduced in~\cite{cserteg:2023_Annals} focusing on drilling and milling.
 These machining operations are among the most used ones, therefore the method is applicable for a wide range of products.
 The abstract method and its implementation was developed in parallel, which required a language with support for easy prototyping and wide variety of tools.
@@ -53,7 +53,7 @@ The output is the optimal position of the part zeros, where optimal means the lo
 Measurements of the rough parts can be obtained with a variety of instruments, including coordinate measurement machines (CMM), laser scanners, measurement arms, etc.
 The two main representations that these devices create are primitive geometries (cylinders, planes, etc.) and free-form geometries in the form of point cloud or triangulated mesh.
 These measurements are fed into the optimization model, which is a convex quadratically constrained quadratic program (QCQP).
-Details of the optimization model can be found in the papers \cite{cserteg:2023_Annals} and \cite{cserteg:2023_CMS}.
+Details of the optimization model can be found in the papers \cite{cserteg:2023_CMS} and \cite{cserteg:2023_Annals}.
 
 \section{Implementation in Julia}
 \label{sec:approach}
@@ -104,7 +104,7 @@ Currently, only dimensional tolerances are handled, but it should be discovered 
 The current implementation supports only cylinders and planes, thus drilling and milling; it is a future research direction to extend the handled machining operations, e.g., to turning.
 
 \section{Acknowledgments}
-The research was supported by the European Union within the framework of the National Laboratory for Autonomous Systems (RRF-2.3.1-21-2022-00002) and the NRDIO TKP2021-NKTA-01 grants.
+The research was supported by the European Union within the framework of the National Laboratory for Autonomous Systems (RRF-2.3.1-21-2022-00002) and the TKP2021-NKTA-01  NRDIO grant on "Research on cooperative production and logistics systems to support a competitive and sustainable economy".
 
 \input{bib.tex}
 
