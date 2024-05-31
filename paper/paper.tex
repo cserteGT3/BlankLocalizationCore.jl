@@ -12,7 +12,7 @@
 \begin{abstract}
 
 Blank localization (also known as workpiece referencing) is an essential task in machining. 
-It aims to precisely establish the geometric relation of the a machine tool (mill, lathe etc.) and the workpiece.
+It aims to precisely establish the geometric relation of the machine tool (mill, lathe, etc.) and the workpiece.
 We introduced the concept of multi-operation blank localization to address this task for drilling and milling scenarios in a semi-automated way, which allows positioning different machining features (e.g., different holes) separately in order to exploit the tolerances on the relative position of those features to compensate the small errors of the blank. 
 The method takes as input the measured rough geometry and the machining CNC code, and computes the best possible position of each feature considering machining allowances and tolerances by solving a convex quadratically constrained quadratic program (QCQP).
 The versatility and extensibility of the Julia language helped the development of this algorithm, materializing in the \texttt{BlankLocalizationCore.jl} package.
@@ -23,9 +23,7 @@ Its flexibility and ease of use make it an excellent research tool that can be d
 \label{sec:intro}
 Cast parts may have small geometric variations from lot to lot that need to be addressed before machining by altering the CNC code.
 Current practice is dominated by iterative adjustments by the human operator, which requires highly trained workers, takes a long time, and still, may produce scrap.
-Automated methods exist for complex free-form parts like wind turbines that place the entire blank as a single solid object 
-%based on the measurement of the rough part and generate the machining code by mini-max/maxi-min optimization 
-\cite{tan:2014_UnconstrainedApproachBlank}\cite{ding:2021_CoarsefineOptimizationMethod}).
+Automated methods exist for complex free-form parts like wind turbines that place the entire blank as a single solid object (\cite{tan:2014_UnconstrainedApproachBlank}\cite{ding:2021_CoarsefineOptimizationMethod}).
 Multi-operation blank localization was introduced in~\cite{cserteg:2023_Annals} focusing on drilling and milling.
 These machining operations are among the most used ones, therefore the method is applicable for a wide range of products.
 The abstract method and its implementation was developed in parallel, which required a language with support for easy prototyping and wide variety of tools.
@@ -44,13 +42,13 @@ The algorithm looks for the optimal position (part zero) for each feature group 
 Features within a group can be, for example, drilled holes on the same side of the part, whose drilling positions are defined relative to a common reference (the part zero).
 Features within the same group must be moved together, but different feature groups can be moved separately.
 The to-be-machined features (short: machined features) need to be aligned with the features on the blank (called rough features) in a way that a minimum machining allowance is ensured and the dimensional tolerances between features are respected.
-The former encodes the requirement that material needs to be removed to ensure proper surface finish and is described for a feature as the smallest thickness of the material removed.
-A dimensional tolerance between two features is modeled as a lower and upper bounds on the distance between the two features.
+The former encodes the requirement that material needs to be removed to ensure proper surface finish and is described for a feature as the smallest thickness of removed material.
+A dimensional tolerance between two features is modeled as lower and upper bounds on the distance between the two features.
 As feature groups move together, only inter-group tolerances need to be considered.
 Fig.~\ref{fig:hatfig} shows two feature groups with their part zeros, as well as the tolerances between features.
 
 \begin{figure}[b]
-	\centerline{\includegraphics[width=0.9\columnwidth]{cirp-annals-2023-figure-2.png}}
+	\centerline{\includegraphics[width=0.95\columnwidth]{cirp-annals-2023-figure-2.png}}
 	\caption{Measured part with two machined feature groups and tolerances between them. $r^M$ and $r^R$ denote the machined and rough radii of a feature, while $\delta$ the machining allowance \cite{cserteg:2023_Annals}.}
 	\label{fig:hatfig}
 \end{figure}
@@ -79,7 +77,7 @@ The goal of the algorithm is to keep the tolerance distances close to the nomina
 %\section{Approach}
 \label{sec:approach}
 
-During the development of the algorithm, we needed an environment (package) that supports the quick prototyping needs of research, while giving a stable background to validate the concept with our industry partner as well.
+During the development of the algorithm, we needed an environment (package) that supports the quick prototyping needs of research, while giving a solid foundation to validate the concept with our industry partner as well.
 These needs include:
 % (high-level, programozói igények nélkül, amit egy menedzser felsorolna):
 
@@ -97,7 +95,7 @@ These needs include:
 
 A flexible type system is designed to handle the different representations of geometries and features.
 Abstract hole and plane geometries model the drilling and milling operations, while traits describe if a feature uses a free-form or a primitive representation.
-An internal API (set of functions) is designed to access the relevant properties of the geometries (center point, radius, surface points, etc).
+An internal API (set of functions) is designed to access the relevant properties of the geometries (center point, radius, surface points, etc.).
 
 This internal API is used when constructing the optimization model utilizing the JuMP ecosystem~\cite{Lubin2023}.
 With JuMP's excellent design, coding the optimization model was as easy as repeating the mathematical model in Julia.
@@ -120,7 +118,6 @@ A flexible type system is implemented: abstract types are defined and all method
 All other functionality of the package are working automatically: setting up the optimization model, solving it, evaluating the results in details and visualizing the geometries.
 \fi
 
-
 \section{Results and future work} %TODO: or Example
 \label{sec:results}
 
@@ -130,12 +127,11 @@ Obviously, there is a trade-off between small tolerance error and large machinin
 Preliminary results were first published in \cite{cserteg:2023_DigitalTwinAssisted}.
 A journal paper describes the original algorithm \cite{cserteg:2023_Annals}, and a conference paper details the modifications for free-form surfaces \cite{cserteg:2023_CMS}.
 
-\begin{figure}[b]
-	\centerline{\includegraphics[width=0.9\columnwidth]{pareto-new-label.png}}
+\begin{figure}[t]
+	\centerline{\includegraphics[width=0.95\columnwidth]{pareto-new-label.png}}
 	\caption{Balancing the machining allowance and the tolerance error \cite{cserteg:2023_Annals}.}
 	\label{fig:pareto}
 \end{figure}
-
 
 Future plans for the package and the method itself include an overhaul of the tolerance modeling scheme.
 Currently, only dimensional tolerances are handled, but it should be discovered if more GD\&T tolerances can be incorporated into the model.
@@ -148,8 +144,7 @@ The current implementation supports only cylinders and planes, thus drilling and
 
 
 \section{Acknowledgments}
-%TODO: CMS másolása
-This research has been supported by the National Laboratory for Autonomous Systems RRF-2.3.1-21-2022-00002 and the NRDIO TKP2021-NKTA-01 grants.
+The research was supported by the European Union within the framework of the National Laboratory for Autonomous Systems (RRF-2.3.1-21-2022-00002) and the NRDIO TKP2021-NKTA-01 grants.
 
 \input{bib.tex}
 
