@@ -116,6 +116,25 @@ function visualizationgeometry(hole::SimpleHole)
 end
 
 """
+HoleAndNormal <: AbstractHoleGeometry
+
+A hole structure with center point, axis and radius.
+"""
+struct HoleAndNormal <: AbstractHoleGeometry
+    p::Vector{Float64}
+    n::Vector{Float64}
+    r::Float64
+end
+
+GeometryStyle(::Type{HoleAndNormal}) = IsPrimitive()
+
+function visualizationgeometry(hole::HoleAndNormal)
+    # p1: feature point
+    p1 = Point3(hole.p)
+    return Disk(Plane(p1, Vec3(hole.n)), hole.r)
+end
+
+"""
 SimplePlane <: AbstractPlaneGeometry
 
 A simple plane structure with one point.

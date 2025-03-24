@@ -28,18 +28,18 @@
 
     ## Rough geometry definitions
 
-    fronthole_r = SimpleHole([82.5, 30, 40], 26)
+    fronthole_r = HoleAndNormal([82.5, 30, 40], [1, 0, 0], 26)
     frontface_r = PlaneAndNormal([82.5, 30, 40], [1, 0, 0])
 
-    righthole1_r = SimpleHole([66, 71.5, 55], 6)
-    righthole2_r = SimpleHole([58, 74.5, 24], 4.905)
-    righthole3_r = SimpleHole([21.5, 68.5, 40], 8)
+    righthole1_r = HoleAndNormal([66, 71.5, 55], [0, 1, 0], 6)
+    righthole2_r = HoleAndNormal([58, 74.5, 24], [0, 1, 0], 4.905)
+    righthole3_r = HoleAndNormal([21.5, 68.5, 40], [0, 1, 0], 8)
     rightface1_r = PlaneAndNormal([66, 71.5, 55], [0, 1, 0])
     rightface2_r = PlaneAndNormal([58, 74.5, 24], [0, 1, 0])
     rightface3_r = PlaneAndNormal([21.5, 68.5, 40], [0, 1, 0])
 
-    backhole1_r = SimpleHole([-3, 44, 53.9], 6.2)
-    backhole2_r = SimpleHole([-3, 16.1, 54], 6.25)
+    backhole1_r = HoleAndNormal([-3, 44, 53.9], [-1, 0, 0], 6.2)
+    backhole2_r = HoleAndNormal([-3, 16.1, 54], [-1, 0, 0], 6.25)
     backface1_r = PlaneAndNormal([-3, 44, 54], [-1, 0, 0])
     backface2_r = PlaneAndNormal([-3, 16, 54], [-1, 0, 0])
 
