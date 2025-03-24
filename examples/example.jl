@@ -111,11 +111,16 @@ pard = Dict("minAllowance"=>0.5, "OptimizeForToleranceCenter"=>true,
 mop = MultiOperationProblem(partzeros, holes, planes, tolerances, pard)
 
 #import Xpress
-import Ipopt
-
-# this does not require JuMP to be loaded
-#optimizeproblem!(mop, Xpress.Optimizer)
+import Ipopt # or Xpress if you have a license
 optimizeproblem!(mop, Ipopt.Optimizer)
+
+#=
+# the following lines are condensed in the above one line: 
+import JuMP
+mop_model = createjumpmodel(mop, Xpress.Optimizer);
+JuMP.optimize!(mop_model)
+setjumpresult!(mop, mop_model)
+=#
 
 ## Evaluation
 
