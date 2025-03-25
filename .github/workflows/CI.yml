@@ -1,13 +1,8 @@
 name: CI
 on:
   push:
-    jobs:
-      test:
-        branches: ['*']
-        tags: ['*']
-      docs:
-        branches: [main]
-        tags: ['*']
+    branches: ['**']
+    tags: ['**']
   pull_request:
 concurrency:
   # Skip intermediate builds: always.
