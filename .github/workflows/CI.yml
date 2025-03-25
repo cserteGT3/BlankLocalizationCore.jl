@@ -1,9 +1,13 @@
 name: CI
 on:
   push:
-    branches:
-      - main
-    tags: ['*']
+    jobs:
+      test:
+        branches: ['*']
+        tags: ['*']
+      docs:
+        branches: [main]
+        tags: ['*']
   pull_request:
 concurrency:
   # Skip intermediate builds: always.
@@ -37,6 +41,7 @@ jobs:
   docs:
     name: Documentation
     runs-on: ubuntu-latest
+    needs: [test]
     permissions:
       contents: write
       statuses: write
