@@ -32,33 +32,49 @@ Exactly for these reasons we chose the Julia language~\cite{bezanson2017julia}.
 \section{Multi-operation blank localization}
 \label{sec:algo}
 
-The algorithm looks for the optimal position (part zero) for each feature group on the workpiece. 
+The algorithm looks for the optimal position for each feature group on the workpiece.
 Features within a group can be, for example, drilled holes on the same side of the part, whose drilling positions are defined relative to a common reference (the part zero).
-Features within the same group must be moved together, but different feature groups can be moved separately.
-The to-be-machined features (short: machined features) need to be aligned with the features on the blank (called rough features) in a way that a minimum machining allowance is ensured and the dimensional tolerances between features are respected.
-The former encodes the requirement that material needs to be removed to ensure proper surface finish and is described for a feature as the smallest thickness of removed material.
-A dimensional tolerance between two features is modeled as lower and upper bounds on the distance between the two features.
-As feature groups move together, only inter-group tolerances need to be considered.
-Fig.~\ref{fig:hatfig} shows two feature groups with their part zeros, as well as the tolerances between features.
+Features within the same group move together, but different feature groups can be moved separately.
+The to-be-machined features (short: machined features) need to "enclose" the features on the blank (called rough features) with a minimum machining allowance which ensures the required surface finish.
+While doing so, the dimensional tolerances between some features need to be respected, as these describe functional properties (e.g. connections to other mating parts).
+Fig.~\ref{fig:hatfig} from \cite{cserteg:2023_Annals} shows an example of these features.
 
-\begin{figure}[b]
+\begin{figure}[hbt]
 	\centerline{\includegraphics[width=0.95\columnwidth]{cirp-annals-2023-figure-2.png}}
-	\caption{Measured part with two machined feature groups and tolerances between them. $r^M$ and $r^R$ denote the machined and rough radii of a feature, while $\delta$ the machining allowance \cite{cserteg:2023_Annals}.}
+	\caption{3D scanned rough features (in grey), two machined feature groups with their part zeros (orange and purple), and tolerances that connect some features \cite{cserteg:2023_Annals}.}
+	%\caption{Measured part with two machined feature groups and tolerances between them. $r^M$ and $r^R$ denote the machined and rough radii of a feature, while $\delta$ the machining allowance \cite{cserteg:2023_Annals}.}
 	\label{fig:hatfig}
 \end{figure}
 
-Inputs of the algorithm are the measured geometry of the rough part, the machining CNC code for each feature (relative to the corresponding part zero), the tolerance ranges for the features, and the minimum machining allowance parameter.
-The output is the optimal position of the part zeros, where optimal means the lowest average tolerance error subject to a given machining allowance.
+%The former encodes the requirement that material needs to be removed to ensure proper surface finish and is described for a feature as the smallest thickness of removed material.
+%A dimensional tolerance between two features is modeled as lower and upper bounds on the distance between the two features.
+%As feature groups move together, only inter-group tolerances need to be considered.
 
-Measurements of the rough parts can be obtained with a variety of instruments, including coordinate measurement machines (CMM), laser scanners, measurement arms, etc.
-The two main representations that these devices create are primitive geometries (cylinders, planes, etc.) and free-form geometries in the form of point cloud or triangulated mesh.
-These measurements are fed into the optimization model, which is a convex quadratically constrained quadratic program (QCQP).
-Details of the optimization model can be found in the papers \cite{cserteg:2023_CMS} and \cite{cserteg:2023_Annals}.
+
+%Briefly we can summarize the multi-operation blank localization as a method that aligns the machined and rough geometries with the required minimum overlap.
+%It does it while making sure that features that are connected by dimensional tolerances are within the required distance range.
+
+%Tolerance model is used
+%Geometric computations
+%Those two are bundled in a convex optimization problem.
+The developed tolerance model replicates the tolerances used in design and machining process and encodes the distance of machined-machined (or sometimes machined-rough) features as axis-aligned minimum and maximum distance of feature points.
+These feature points can be a point of a plane or the center point of the end face of a cylinder for example.
+The tolerance evaluation is part of the objective optimization model which means that the distance of these features needs to be often calculated.
+%The distance of these features points, thus the evaluation of the tolerance depends on the position of these features which means that the tolerance values need to be evaluated while solving the optimization model.
+
+Evaluating the minimum machining allowance contributes to the constraints of the optimization program and depends on geometric calculations as well.
+The allowance calculation requires the position of the features as well as other geometric parameter (radii of cylinders for example).
+%TODO: még egy mondat?
+
+Objective of the optimization program is to achieve as little tolerance deviation as possible, while ensuring that material is removed for proper surface finish.
+These objectives and constraints are encoded into a convex quadratically constrained quadratic program (convex QCQP).
+While an appropriate solver is needed for this family of problems, the solver also needs to evaluate the above described tolerance model and geometric queries during solution.
+We detail this interaction in the next section, while the algorithm itself is described in \cite{cserteg:2023_CMS} and \cite{cserteg:2023_Annals}.
 
 \section{Implementation in Julia}
 \label{sec:approach}
 
-During the development of the algorithm, we needed an environment (package) that supports the quick prototyping needs of research, while giving a solid foundation to validate the concept with our industry partner as well.
+During the development of the algorithm, we needed an environment (package) that supports the quick prototyping needs of research, while giving a solid foundation to validate the concept with our industry partner.
 These needs include:
 
 \begin{itemize}
