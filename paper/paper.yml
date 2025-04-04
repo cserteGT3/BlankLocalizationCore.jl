@@ -1,9 +1,9 @@
 title: "BlankLocalizationCore.jl: implementing blank localization in Julia"
 keywords:
   - Julia
-  - Optimization
   - Machining
   - Blank localization
+  - Convex optimization
 authors:
   - name: Tamás Cserteg
     orcid: 0000-0002-8028-8061
