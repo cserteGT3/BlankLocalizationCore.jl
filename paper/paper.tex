@@ -28,8 +28,8 @@ Cast parts may have small geometric variations from lot to lot that need to be a
 Current practice is dominated by iterative adjustments by human operators, which requires highly trained workers and takes a long time.
 %, and still, may produce scrap.
 %TODO: kell egyáltalán ezeket hivatkozni?
-Automated methods exist for complex free-form parts like wind turbines that place the entire blank as a single solid object \cite{ding:2021_CoarsefineOptimizationMethod}\cite{tan:2014_UnconstrainedApproachBlank}.
-Multi-operation blank localization~\cite{cserteg:2023_Annals} however handles group of features independently providing greater flexibility than traditional approaches.
+Automated methods exist for complex free-form parts like wind turbines that place the entire blank as a single solid object \cite{tan:2014_UnconstrainedApproachBlank}.
+Multi-operation blank localization~\cite{cserteg:2023_Annals} however handles groups of features independently, providing greater flexibility than traditional approaches.
 It focuses on drilling and milling which are among the most common machining operations, making it applicable to a wide range of products.
 The abstract method and its implementation were developed in parallel, which required a language with wide variety of tools and support for easy prototyping.
 Exactly for these reasons we chose the Julia language~\cite{bezanson2017julia}.
@@ -60,7 +60,7 @@ The position of the part zeros are the decision variables of the optimization pr
 % 2. mik a korlátok
 % 3. mi a célfv
 
-The machined features need to "enclose" the pre-cast features on the blank (called rough features) with a minimum machining allowance which ensures the required surface finish.
+To ensure the required surface finish, the machined features must enclose the pre-cast features on the blank (called rough features) with a minimum machining allowance (a lower bound parameter).
 The allowance calculation requires the final part specification in the form of the machining CNC code as well as a representation of the rough geometries.
 From their positions and geometric parameters their distance can be computed, which then can be used to generate the allowance constraints for the optimization program.
 
@@ -144,8 +144,7 @@ Julia enabled us to develop an implementation with the following properties:
 \end{itemize}
 
 %TODO: asbtract type system is a good base for handling the import fnctions for the measuremnt tool
-
-The heart of the implementation is the solver provided by the JuMP ecosystem~\cite{Lubin2023}.
+The implementation is built around JuMP~\cite{Lubin2023}, which serves as the interface to the underlying optimization solver.
 With JuMP's excellent design, combining the necessary geometric calculations and the declarative optimization program definition was straightforward.
 %implementing the optimization model was as easy as repeating the mathematical model in Julia.
 %TODO
@@ -195,9 +194,9 @@ The package documentation contains the list of functions that need to be defined
 %Primitive geometries need to have the \texttt{featurepoint} method and cylindrical features need the \texttt{featureradius} on top of that.
 One function that we want to highlight is the \texttt{visualizationgeometry}, which needs to return a \texttt{Meshes.jl} object that will be passed to the \texttt{Meshes.viz} function.
 %The visulization interface is built around Meshes.jl, therefore the to-be-showed geometries must be from that package.
-Using the Meshes ecosystem~\cite{Hoffimann2023}, we could not only interactively inspect the results of the optimization, but also produce publication quality images, like Fig.~\ref{fig:hatfig} in \cite{cserteg:2023_Annals}.
+Using the Meshes ecosystem~\cite{Hoffimann2023}, we could not only interactively inspect the results of the optimization, but also produce publication quality images, like Fig.~\ref{fig:hatfig}.
 
-\vspace*{2em}
+\vspace*{1em}
 
 \begin{lstlisting}[language = Julia, numbers=left, label={lst:example}, caption={Defining a new type for the optimization model.}]
 struct MyDisk <: AHoleGeometry
