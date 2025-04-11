@@ -25,4 +25,5 @@ makedocs(;
 deploydocs(;
     repo="github.com/cserteGT3/BlankLocalizationCore.jl",
     devbranch="main",
+    push_preview = true
 )
