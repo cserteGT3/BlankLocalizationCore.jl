@@ -40,7 +40,7 @@ By moving the part zeros, we can indirectly control the positions of the associa
 Each part zero—and by extension, each group—can be moved independently, which gives the method its flexibility.
 In the optimization program, the positions of the part zeros are the decision variables.
 
-To ensure the required surface finish, the machined features must enclose the pre-cast features on the blank (called rough features) with a minimum machining allowance (a lower bound parameter).
+To ensure the required surface finish, the machined features must enclose the pre-cast features (rough features) on the blank with a minimum machining allowance (a lower bound parameter).
 The allowance calculation requires the final part specification in the form of the machining CNC code as well as a representation of the rough geometries.
 From their positions and geometric parameters their distance can be computed, which then can be used to generate the allowance constraints for the optimization program.
 
@@ -129,7 +129,7 @@ end
 
 Future plans for the package and the method itself include an overhaul of the tolerance modelling scheme.
 It should be possible to generalize the current dimensional tolerances for  more GD\&T tolerances by introducing a new type hierarchy based on the current geometry type tree and a function interface for the optimization program.
-Another direction of development is to extend the supported operations from drilling and milling to others, such as turning, although this is more a research question than an implementation.
+Another direction of development is to extend the supported operations from drilling and milling to others, such as turning, although this is more of a research question than an implementation issue.
 
 \section{Acknowledgments}
 The research was supported by the European Union within the framework of the National Laboratory for Autonomous Systems (RRF-2.3.1-21-2022-00002) and the TKP2021-NKTA-01  NRDIO grant on "Research on cooperative production and logistics systems to support a competitive and sustainable economy".
