@@ -6,3 +6,5 @@ Meshes = "eacbb407-ea5a-433e-ab97-5258b1ca43fa"
 
 [compat]
 BlankLocalizationCore = "2.1"
+Meshes = "0.36"
+Ipopt = "1.7"
