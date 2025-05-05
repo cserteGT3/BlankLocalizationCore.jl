@@ -1,47 +1,45 @@
 @testset "IsPrimitive geometries" begin
-    sh = SimpleHole([0, 0, 0], 29)
-    sp = SimplePlane([0, 0, 0])
+    tpoints = [(0,0),(1,0),(1,1)]
+    tconnec = [connect((1,2,3))]
+    tmesh = SimpleMesh(tpoints, tconnec)
+    cyl1 = Cylinder(15.0)
 
-    @test featurepoint(sh) == [0, 0, 0]
-    @test featureradius(sh) == 29
-    @test featurepoint(sp) == [0, 0, 0]
+    pz1 = PartZero("pz1", [0,0,0], [1 0 0;0 1 0;0 0 1])
 
-    @test_throws MethodError featureradius(sp)
-    @test_throws ErrorException surfacepoints(sp)
-    @test_throws ErrorException surfacepoints(sh)
-    @test_throws ErrorException filteredsurfacepoints(sp)
-    @test_throws ErrorException filteredsurfacepoints(sh)
+    # IsFreeForm, HOLELIKE
+    r1 = RoughFeature("rh1", HOLELIKE, tmesh)
+    @test GeometryStyle(r1) == IsFreeForm()
+    @test isholelike(r1)
+    @test_throws ErrorException featureradius(r1)
+    @test_throws ErrorException featurepoint(r1)
 
-    pz1 = PartZero("pz1", [0, 0, 0], hcat([0, 1, 0], [0, 0, 1], [1, 0, 0]))
-    sh_r = SimpleHole([82.5, 30, 40], 26)
-    sp_r = PlaneAndNormal([82.5, 30, 40], [1, 0, 0])
-    fd_sh = FeatureDescriptor("simple-hole", pz1, true, true)
-    fd_sp = FeatureDescriptor("simple-plane", pz1, true, true)
+    # IsPrimitive, HOLELIKE
+    m1 = MachinedFeature("mh1", HOLELIKE, cyl1, pz1)
+    @test GeometryStyle(m1) == IsPrimitive()
+    @test isholelike(m1)
+    @test featurepoint(m1) == Point3(0,0,1)
+    @test featureradius(m1) == 15
+    @test_throws ErrorException surfacepoints(m1)
 
-    h1 = HoleLocalizationFeature(fd_sh, sh_r, sh)
-    p1 = PlaneLocalizationFeature(fd_sp, sp_r, sp)
+    f1 = LocalizationFeature("h1", r1, m1)
+    @test GeometryStyle(f1) == IsFreeForm()
 
-    @test BLC.getfeaturename(h1) == "simple-hole"
-    @test BLC.getfeaturename(p1) == "simple-plane"
-    @test BLC.getpartzero(h1) === BLC.getpartzero(p1) === pz1
-    @test BLC.getpartzeroname(h1) == "pz1"
-    @test BLC.hasrough(h1)
-    @test BLC.hasrough(p1)
-    @test BLC.hasmachined(h1)
-    @test BLC.hasmachined(p1)
+    # IsPrimitive, PLANELIKE
+    r2 = RoughFeature("rp1", PLANELIKE, Plane(Point3(0,0,0), Vec3(0,0,1)))
+    @test GeometryStyle(r2) == IsPrimitive()
+    @test isplanelike(r2)
+    @test featurepoint(r2) == Point3(0,0,0)
+    @test_throws ErrorException featureradius(r2)
+    @test_throws ErrorException surfacepoints(r2)
 
-    @test BLC.getroughfeaturepoint(h1) == [82.5, 30, 40]
-    @test BLC.getroughfeaturepoint(p1) == [82.5, 30, 40]
-    @test BLC.getmachinedfeaturepoint(h1) == [0, 0, 0]
-    @test BLC.getmachinedfeaturepoint(p1) == [0, 0, 0]
-    @test BLC.getmachinedradius(h1) == 29
-    @test_throws MethodError BLC.getmachinedradius(p1)
-    @test BLC.getroughradius(h1) == 26
-    @test_throws MethodError BLC.getroughradius(p1)
+    # IsPrimitive, PLANELIKE
+    m2 = MachinedFeature("mp1", PLANELIKE, Plane(Point3(0,0,0), Vec3(0,0,1)), pz1)
+    @test GeometryStyle(m2) == IsPrimitive()
+    @test isplanelike(m2)
+    @test featurepoint(m2) == Point3(0,0,0)
+    @test_throws ErrorException featureradius(m2)
+    @test_throws ErrorException surfacepoints(m2)
 
-    @test_throws ErrorException BLC.getroughfilteredpoints(h1)
-    @test_throws ErrorException BLC.getroughfilteredpoints(p1)
-
-    @test BLC.getmachinedfeaturepointindatum(h1) == [0, 0, 0]
-    @test BLC.getmachinedfeaturepointindatum(p1) == [0, 0, 0]
+    f2 = LocalizationFeature("p1", r2, m2)
+    @test GeometryStyle(f2) == IsPrimitive()
 end
