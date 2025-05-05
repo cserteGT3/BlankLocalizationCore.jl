@@ -43,7 +43,7 @@ For the exaplanation on how the package works, please read through the [Example]
 
 This package couldn't have been created without the great people behind the following projects (as well as the whole Julia ecosystem):
 
-* [Meshes.jl](https://github.com/JuliaGeometry/Meshes.jl), [MeshViz.jl](https://github.com/JuliaGeometry/MeshViz.jl) and the [Makie.jl](https://github.com/MakieOrg/Makie.jl) ecosystem
+* [Meshes.jl](https://github.com/JuliaGeometry/Meshes.jl) and the [Makie.jl](https://github.com/MakieOrg/Makie.jl) ecosystem
 * [JuMP.jl](https://jump.dev/)
 * [DataFrames.jl](https://github.com/JuliaData/DataFrames.jl) and [PrettyTables.jl](https://github.com/ronisbr/PrettyTables.jl)
 
