@@ -54,4 +54,4 @@ The list (in chronological order):
 
 * _Digital twin assisted workpiece referencing for compensating the stock deviation of casted parts_: [link to paper](https://www.sciencedirect.com/science/article/pii/S2212827123002743)
 * _Multi-operation optimal blank localization for near net shape machining_: [link to paper](https://www.sciencedirect.com/science/article/pii/S0007850623000884)
-* _Multi-operation blank localization with hybrid point cloud and feature-based representation_: [link to pre-print paper](https://www.researchgate.net/publication/372410453_Multi-operation_blank_localization_with_hybrid_point_cloud_and_feature-based_representation)
+* _Multi-operation blank localization with hybrid point cloud and feature-based representation_: [link to paper](https://www.sciencedirect.com/science/article/pii/S221282712300803X)
