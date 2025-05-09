@@ -156,10 +156,13 @@ minimumallowance(mop::MultiOperationProblem) = minimumallowance(allowancetable(m
 
 Calculate the minimum allowances (radial and axial) for the given allowance database
 (computed by [`allowancetable`](@ref)).
+Return `NaN` if there's no allowance.
 """
 function minimumallowance(allowancedb)
-    radial = minimum(filter(x->!isnothing(x), allowancedb.rallowance))
-    axial = minimum(filter(x->!isnothing(x), allowancedb.axallowance))
+    radial_a = filter(x->!isnothing(x), allowancedb.rallowance)
+    axial_a = filter(x->!isnothing(x), allowancedb.axallowance)
+    radial = isempty(radial_a) ? NaN : minimum(radial_a)
+    axial = isempty(axial_a) ? NaN : minimum(axial_a)
     return (radial = radial, axial = axial)
 end
 
