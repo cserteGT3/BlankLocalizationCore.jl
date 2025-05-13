@@ -1,4 +1,4 @@
-# Example
+# Complex 3D example
 
 This example can be found as a single file in the repository under the [`examples`](https://github.com/cserteGT3/BlankLocalizationCore.jl/blob/main/examples/example.jl) folder.
 The script file does not contain the package installation steps, though it comes with a `Project.toml` file that you can instantiate.
