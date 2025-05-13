@@ -356,6 +356,15 @@ function isoptimum(or::OptimizationResult)
     return (or.status == "OPTIMAL") | (or.status == "LOCALLY_SOLVED")
 end
 
+"""
+    Tolerance
+
+A toleranced distance of two features.    
+This struct stores the names of the features, if their rough or machined "form"
+is toleranced and also along which axis is their distance toleranced.
+The nominal, lower and upper values are self-explanatory
+and a comment can be also added as a string.
+"""
 struct Tolerance
     featurename1::String
     ismachined1::Bool
