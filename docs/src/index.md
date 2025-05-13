@@ -37,7 +37,7 @@ The package is registered in the general registry, so it can be installed via ru
 ] add BlankLocalizationCore
 ```
 
-For the exaplanation on how the package works, please read through the [Example](@ref) page.
+For the exaplanation on how the package works, please read through the [Short 2D example](@ref) and [Complex 3D example](@ref) pages.
 
 ## Acknowledgements
 
