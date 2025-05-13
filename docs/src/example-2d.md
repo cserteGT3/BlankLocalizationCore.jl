@@ -174,6 +174,17 @@ Pkg.add(["Meshes", "GLMakie"])
 Then the "visualization geometries" can be generated and displayed:
 
 ```julia
+using Meshes
+import GLMakie
+
+function initviz(;hideaxes=false)
+    f = viz([Point(i, j, k) for i in 0:1 for j in 0:1 for k in 0:1], size=0.01, color=:white)
+    if hideaxes
+        f.axis.show_axis[] = false
+    end
+    f
+end
+
 rholes = genroughholes(mop)
 mholes = genmachinedholes(mop)
 mplanes = genmachinedplanes(mop)
