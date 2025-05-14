@@ -29,7 +29,7 @@ Note, that an optimization solver is needed to use the package (Ipopt or Xpress 
 
 ```julia
 Pkg.add("Ipopt") # open source solver
-# Pkg.add("Xpress") # commercial solver, that required purchased/community license
+# Pkg.add("Xpress") # commercial solver, that requires purchased/community license
 ```
 
 For the exaplanation on how the package works, see the followings:
