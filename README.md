@@ -21,10 +21,22 @@ Our paper proposes a method, that ensures a proper machining allowance (minimum 
 The package is registered in the general registry, so it can be installed via running:
 
 ```julia
-] add BlankLocalizationCore
+using Pkg
+Pkg.add("BlankLocalizationCore")
 ```
 
-For the exaplanation on how the package works, please read through the [Example](https://csertegt3.github.io/BlankLocalizationCore.jl/stable/example/) page of the documentation.
+Note, that an optimization solver is needed to use the package (Ipopt or Xpress for example), which needs to be installed as well:
+
+```julia
+Pkg.add("Ipopt") # open source solver
+# Pkg.add("Xpress") # commercial solver, that required purchased/community license
+```
+
+For the exaplanation on how the package works, see the followings:
+
+- [First steps](#first-steps) in the Readme: short example with copy-paste code.
+- [Short 2D example](https://csertegt3.github.io/BlankLocalizationCore.jl/stable/example-2d/): the same example in the documentation with a bit more details.
+- [Complex 3D example](https://csertegt3.github.io/BlankLocalizationCore.jl/stable/example/): a complex, detailed 3D example showcasing the full potential of the package.
 
 Note, that at least Julia 1.9 is required.
 If you are interested in using the package with older versions, please open an issue!
