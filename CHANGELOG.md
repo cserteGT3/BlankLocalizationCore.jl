@@ -16,8 +16,11 @@ Types of changes:
 
 ## [Unreleased]
 
+## [2.4.0] - 2025-05-22
+
 ### Added
 
+- changelog file
 - new, simpler 2D example (in docs and Readme too)
 - enabled docs preview on PRs (link is `https://csertegt3.github.io/BlankLocalizationCore.jl/previews/PR<num>/`)
 
