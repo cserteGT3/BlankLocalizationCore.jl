@@ -16,6 +16,14 @@ Types of changes:
 
 ## [Unreleased]
 
+## [2.4.1] - 2025-05-22
+
+Release is only needed for triggering Zenodo for the JuliaCon paper.
+
+### Added
+
+- zenodo archive
+
 ## [2.4.0] - 2025-05-22
 
 ### Added
