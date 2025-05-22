@@ -29,21 +29,34 @@ When doing so, one must consider two important factors:
 
 Our paper proposes a method, that ensures a proper machining allowance (minimum requirement), while trying to optimize to the center of the tolerance fields between features.
 
-The documentation goes through a detailed example of the process while showing how to use the package.
+## Installation and usage
 
 The package is registered in the general registry, so it can be installed via running:
 
 ```julia
-] add BlankLocalizationCore
+using Pkg
+Pkg.add("BlankLocalizationCore")
 ```
 
-For the exaplanation on how the package works, please read through the [Example](@ref) page.
+Note, that an optimization solver is needed to use the package (Ipopt or Xpress for example), which needs to be installed as well:
+
+```julia
+Pkg.add("Ipopt") # open source solver
+# Pkg.add("Xpress") # commercial solver, that requires purchased/community license
+```
+
+For the exaplanation on how the package works, see the followings:
+
+- [First steps](https://github.com/cserteGT3/BlankLocalizationCore.jl?tab=readme-ov-file#first-steps) in the Readme: short example with copy-paste code.
+- [Short 2D example](@ref): the same example in the documentation with a bit more details.
+- [Complex 3D example](@ref): a complex, detailed 3D example showcasing the full potential of the package.
+
 
 ## Acknowledgements
 
 This package couldn't have been created without the great people behind the following projects (as well as the whole Julia ecosystem):
 
-* [Meshes.jl](https://github.com/JuliaGeometry/Meshes.jl), [MeshViz.jl](https://github.com/JuliaGeometry/MeshViz.jl) and the [Makie.jl](https://github.com/MakieOrg/Makie.jl) ecosystem
+* [Meshes.jl](https://github.com/JuliaGeometry/Meshes.jl) and the [Makie.jl](https://github.com/MakieOrg/Makie.jl) ecosystem
 * [JuMP.jl](https://jump.dev/)
 * [DataFrames.jl](https://github.com/JuliaData/DataFrames.jl) and [PrettyTables.jl](https://github.com/ronisbr/PrettyTables.jl)
 
@@ -54,4 +67,4 @@ The list (in chronological order):
 
 * _Digital twin assisted workpiece referencing for compensating the stock deviation of casted parts_: [link to paper](https://www.sciencedirect.com/science/article/pii/S2212827123002743)
 * _Multi-operation optimal blank localization for near net shape machining_: [link to paper](https://www.sciencedirect.com/science/article/pii/S0007850623000884)
-* _Multi-operation blank localization with hybrid point cloud and feature-based representation_: [link to pre-print paper](https://www.researchgate.net/publication/372410453_Multi-operation_blank_localization_with_hybrid_point_cloud_and_feature-based_representation)
+* _Multi-operation blank localization with hybrid point cloud and feature-based representation_: [link to paper](https://www.sciencedirect.com/science/article/pii/S221282712300803X)

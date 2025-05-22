@@ -16,7 +16,8 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Example" => "example.md",
+        "Short 2D example" => "example-2d.md",
+        "Complex 3D example" => "example.md",
         "API extension" => "api.md",
         "Reference" => "reference.md"
     ],
@@ -25,4 +26,5 @@ makedocs(;
 deploydocs(;
     repo="github.com/cserteGT3/BlankLocalizationCore.jl",
     devbranch="main",
+    push_preview = true
 )

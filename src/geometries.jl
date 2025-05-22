@@ -116,6 +116,25 @@ function visualizationgeometry(hole::SimpleHole)
 end
 
 """
+HoleAndNormal <: AbstractHoleGeometry
+
+A hole structure with center point, axis and radius.
+"""
+struct HoleAndNormal <: AbstractHoleGeometry
+    p::Vector{Float64}
+    n::Vector{Float64}
+    r::Float64
+end
+
+GeometryStyle(::Type{HoleAndNormal}) = IsPrimitive()
+
+function visualizationgeometry(hole::HoleAndNormal)
+    # p1: feature point
+    p1 = Point3(hole.p)
+    return Disk(Plane(p1, Vec3(hole.n)), hole.r)
+end
+
+"""
 SimplePlane <: AbstractPlaneGeometry
 
 A simple plane structure with one point.
@@ -337,6 +356,15 @@ function isoptimum(or::OptimizationResult)
     return (or.status == "OPTIMAL") | (or.status == "LOCALLY_SOLVED")
 end
 
+"""
+    Tolerance
+
+A toleranced distance of two features.    
+This struct stores the names of the features, if their rough or machined "form"
+is toleranced and also along which axis is their distance toleranced.
+The nominal, lower and upper values are self-explanatory
+and a comment can be also added as a string.
+"""
 struct Tolerance
     featurename1::String
     ismachined1::Bool

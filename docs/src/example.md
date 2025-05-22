@@ -1,12 +1,23 @@
-# Example
+# Complex 3D example
 
-This example can be found as a single file in the repository under the `examples` folder.
-The only difference is, that the file uses the [Ipopt](https://github.com/jump-dev/Ipopt.jl) package for solving the optimization.
+This example can be found as a single file in the repository under the [`examples`](https://github.com/cserteGT3/BlankLocalizationCore.jl/blob/main/examples/example.jl) folder.
+The script file does not contain the package installation steps, though it comes with a `Project.toml` file that you can instantiate.
+
+## Getting started
+
+Install the necessary packages:
+
+* `Ipopt` (or `Xpress`)
+* `Meshes` and `GLMakie`: only necessary for visualization
+
+```julia
+] add BlankLocalizationCore Ipopt Meshes GLMakie
+```
 
 ## Example part
 
 The following part is crafted for demonstrating purposes.
-The CAD filesa are available here: [machined](assets/example-part-machined.stl) and [rough](assets/example-part-rough.stl).
+The CAD files are available here: [machined](assets/example-part-machined.stl) and [rough](assets/example-part-rough.stl).
 The two images below show the part from its "front" and "back" sides in its machined state.
 
 ![Machined look front](assets/machined-front.png)
@@ -121,18 +132,18 @@ Note that a plane normal is given, that is only used later when visualizing the 
 ```julia
 ## Rough geometry definitions
 
-fronthole_r = SimpleHole([82.5, 30, 40], 26)
+fronthole_r = HoleAndNormal([82.5, 30, 40], [1, 0, 0], 26)
 frontface_r = PlaneAndNormal([82.5, 30, 40], [1, 0, 0])
 
-righthole1_r = SimpleHole([66, 71.5, 55], 6)
-righthole2_r = SimpleHole([58, 74.5, 24], 4.905)
-righthole3_r = SimpleHole([21.5, 68.5, 40], 8)
+righthole1_r = HoleAndNormal([66, 71.5, 55], [0, 1, 0], 6)
+righthole2_r = HoleAndNormal([58, 74.5, 24], [0, 1, 0], 4.905)
+righthole3_r = HoleAndNormal([21.5, 68.5, 40], [0, 1, 0], 8)
 rightface1_r = PlaneAndNormal([66, 71.5, 55], [0, 1, 0])
 rightface2_r = PlaneAndNormal([58, 74.5, 24], [0, 1, 0])
 rightface3_r = PlaneAndNormal([21.5, 68.5, 40], [0, 1, 0])
 
-backhole1_r = SimpleHole([-3, 44, 53.9], 6.2)
-backhole2_r = SimpleHole([-3, 16.1, 54], 6.25)
+backhole1_r = HoleAndNormal([-3, 44, 53.9], [-1, 0, 0], 6.2)
+backhole2_r = HoleAndNormal([-3, 16.1, 54], [-1, 0, 0], 6.25)
 backface1_r = PlaneAndNormal([-3, 44, 54], [-1, 0, 0])
 backface2_r = PlaneAndNormal([-3, 16, 54], [-1, 0, 0])
 ```
@@ -263,11 +274,10 @@ These are:
 | SetPartZeroPosition | The position of each part zero can be set with this option. A vector of 3 long vectors is expected, that is matched with the number of part zeros. Empty vectors can be passed, if not all part zero positions should be set. For example setting this option to `[[], [], []]` for three part zeros will have no effect. `NaN` elements are ignored, which means that specific axes of part zeros can be set. For example `[[NaN, 150, Nan], [], []]` would only set the value of the Y axis of the first part zero, all others are unaffected. | | Optional |
 | maxPlaneZAllowance | The allowance has no upper bound by default. For planes, it is possible to set an upper bound to avoid the issue of "machining the whole part away". | | Optional |
 
-We need to load the JuMP package and also an optimizer.
-For the papers we used FICO Xpress, therefore here it will be used as well, thanks to the [Xpress.jl](https://github.com/jump-dev/Xpress.jl) package.
-Note that a licence is needed, however the generated problem size does not exceed the limit of the (free) community license.
-
+An optimization solver is needed for which we use [Xpress.jl](https://github.com/jump-dev/Xpress.jl) in our research.
+A license is required for FICO Xpress (though the generated problem size does not exceed the limit of the (free) community license).
 The [Ipopt](https://github.com/jump-dev/Ipopt.jl) and [SCIP](https://github.com/scipopt/SCIP.jl) solvers were also tested and can be used.
+We use the former in this example.
 
 ```julia
 ## Constructing and solving the optimization problem
@@ -276,16 +286,16 @@ pard = Dict("minAllowance"=>0.5, "OptimizeForToleranceCenter"=>true,
 
 mop = MultiOperationProblem(partzeros, holes, planes, tolerances, pard)
 
-import JuMP
-import Xpress
+import Ipopt # or Xpress if you have a license
+optimizeproblem!(mop, Ipopt.Optimizer)
 
+#=
+# the following lines are condensed in the above one line: 
+import JuMP
 mop_model = createjumpmodel(mop, Xpress.Optimizer);
 JuMP.optimize!(mop_model)
 setjumpresult!(mop, mop_model)
-
-# or a oneliner instead of the above three
-# this does not require JuMP to be loaded
-optimizeproblem!(mop, Xpress.Optimizer)
+=#
 ```
 
 ## Evaluating the result
@@ -295,45 +305,45 @@ Copying them from the REPL looks like this:
 
 ```julia-repl
 julia> printallowancetable(mop)
-                                                      Allowance table Min allowance radial: 1.064 axial: 0.500
+                                                      Allowance table Min allowance radial: 1.489 axial: 0.500
 ┌────────────┬──────────────┬───────────┬───────────┬───────────┬────────┬────────┬────────┬───────────┬────────┬────────────┬───────────┬────────────┬─────────────┐
 │       name │ partzeroname │ machinedx │ machinedy │ machinedz │ roughx │ roughy │ roughz │ machinedr │ roughr │ xydistance │ zdistance │ rallowance │ axallowance │
 ├────────────┼──────────────┼───────────┼───────────┼───────────┼────────┼────────┼────────┼───────────┼────────┼────────────┼───────────┼────────────┼─────────────┤
-│  fronthole │        front │      82.0 │   29.7596 │    40.436 │   82.5 │   30.0 │   40.0 │      29.0 │   26.0 │   0.497873 │           │    2.50213 │             │
-│ righthole1 │        right │      66.0 │   70.7596 │    55.436 │   66.0 │   71.5 │   55.0 │       7.5 │    6.0 │    0.43597 │           │    1.06403 │             │
-│ righthole2 │        right │      57.0 │   73.7596 │    24.436 │   58.0 │   74.5 │   24.0 │       9.0 │  4.905 │     1.0909 │           │     3.0041 │             │
-│ righthole3 │        right │      22.0 │   67.7596 │    40.436 │   21.5 │   68.5 │   40.0 │      13.5 │    8.0 │   0.663378 │           │    4.83662 │             │
-│  backhole1 │         back │     -2.25 │   43.7596 │    54.436 │   -3.0 │   44.0 │   53.9 │       9.0 │    6.2 │   0.587428 │           │    2.21257 │             │
-│  backhole2 │         back │     -2.25 │   15.7596 │    54.436 │   -3.0 │   16.1 │   54.0 │       9.0 │   6.25 │    0.55314 │           │    2.19686 │             │
-│  frontface │        front │      82.0 │   29.7596 │    40.436 │   82.5 │   30.0 │   40.0 │           │        │            │      -0.5 │            │         0.5 │
-│ rightface1 │        right │      66.0 │   70.7596 │    55.436 │   66.0 │   71.5 │   55.0 │           │        │            │ -0.740431 │            │    0.740431 │
-│ rightface2 │        right │      57.0 │   73.7596 │    24.436 │   58.0 │   74.5 │   24.0 │           │        │            │ -0.740431 │            │    0.740431 │
-│ rightface3 │        right │      22.0 │   67.7596 │    40.436 │   21.5 │   68.5 │   40.0 │           │        │            │ -0.740431 │            │    0.740431 │
-│  backface1 │         back │     -2.25 │   43.7596 │    54.436 │   -3.0 │   44.0 │   54.0 │           │        │            │     -0.75 │            │        0.75 │
-│  backface2 │         back │     -2.25 │   15.7596 │    54.436 │   -3.0 │   16.0 │   54.0 │           │        │            │     -0.75 │            │        0.75 │
+│  fronthole │        front │      82.0 │   29.7558 │   39.9886 │   82.5 │   30.0 │   40.0 │      29.0 │   26.0 │    0.24448 │           │    2.75552 │             │
+│ righthole1 │        right │      66.0 │   70.7558 │   54.9886 │   66.0 │   71.5 │   55.0 │       7.5 │    6.0 │  0.0114074 │           │    1.48859 │             │
+│ righthole2 │        right │      57.0 │   73.7558 │   23.9886 │   58.0 │   74.5 │   24.0 │       9.0 │  4.905 │    1.00007 │           │    3.09493 │             │
+│ righthole3 │        right │      22.0 │   67.7558 │   39.9886 │   21.5 │   68.5 │   40.0 │      13.5 │    8.0 │    0.50013 │           │    4.99987 │             │
+│  backhole1 │         back │     -2.25 │   43.7558 │   53.9886 │   -3.0 │   44.0 │   53.9 │       9.0 │    6.2 │   0.259786 │           │    2.54021 │             │
+│  backhole2 │         back │     -2.25 │   15.7558 │   53.9886 │   -3.0 │   16.1 │   54.0 │       9.0 │   6.25 │   0.344403 │           │     2.4056 │             │
+│  frontface │        front │      82.0 │   29.7558 │   39.9886 │   82.5 │   30.0 │   40.0 │           │        │            │      -0.5 │            │         0.5 │
+│ rightface1 │        right │      66.0 │   70.7558 │   54.9886 │   66.0 │   71.5 │   55.0 │           │        │            │ -0.744214 │            │    0.744214 │
+│ rightface2 │        right │      57.0 │   73.7558 │   23.9886 │   58.0 │   74.5 │   24.0 │           │        │            │ -0.744214 │            │    0.744214 │
+│ rightface3 │        right │      22.0 │   67.7558 │   39.9886 │   21.5 │   68.5 │   40.0 │           │        │            │ -0.744214 │            │    0.744214 │
+│  backface1 │         back │     -2.25 │   43.7558 │   53.9886 │   -3.0 │   44.0 │   54.0 │           │        │            │     -0.75 │            │        0.75 │
+│  backface2 │         back │     -2.25 │   15.7558 │   53.9886 │   -3.0 │   16.0 │   54.0 │           │        │            │     -0.75 │            │        0.75 │
 └────────────┴──────────────┴───────────┴───────────┴───────────┴────────┴────────┴────────┴───────────┴────────┴────────────┴───────────┴────────────┴─────────────┘
 
 julia> printtolerancetable(mop)
                                                      Tolerance table avgabsreltolerror: 0.0%
-┌───────┬──────────────┬───────────┬──────────────┬───────────┬──────────┬────────┬────────┬───────────────────────────┬───────┬────────────────┐
-│ Tol # │     feature1 │ partzero1 │     feature2 │ partzero2 │ nominald │ lowerd │ upperd │                  distance │ reald │ tolerancefield │
-├───────┼──────────────┼───────────┼──────────────┼───────────┼──────────┼────────┼────────┼───────────────────────────┼───────┼────────────────┤
-│     1 │ M rightface1 │     right │  M fronthole │     front │     41.0 │   40.7 │   41.3 │       [-16.0, 41.0, 15.0] │  41.0 │          0.0 % │
-│     2 │  M backhole1 │      back │  M fronthole │     front │     14.0 │   13.8 │   14.2 │      [-84.25, 14.0, 14.0] │  14.0 │         -0.0 % │
-│     3 │  M fronthole │     front │  M backhole2 │      back │     14.0 │   13.8 │   14.2 │      [84.25, 14.0, -14.0] │  14.0 │          0.0 % │
-│     4 │  M backhole1 │      back │  M fronthole │     front │     14.0 │   13.8 │   14.2 │      [-84.25, 14.0, 14.0] │  14.0 │          0.0 % │
-│     5 │  M backhole2 │      back │  M fronthole │     front │     14.0 │   13.8 │   14.2 │     [-84.25, -14.0, 14.0] │  14.0 │          0.0 % │
-│     6 │ M rightface3 │     right │  M fronthole │     front │     38.0 │   37.7 │   38.3 │        [-60.0, 38.0, 0.0] │  38.0 │          0.0 % │
-│     7 │ M rightface2 │     right │  M fronthole │     front │     44.0 │   43.7 │   44.3 │      [-25.0, 44.0, -16.0] │  44.0 │          0.0 % │
-│     8 │  M frontface │     front │ M righthole3 │     right │     60.0 │   59.7 │   60.3 │        [60.0, -38.0, 0.0] │  60.0 │          0.0 % │
-│     9 │  M frontface │     front │ M righthole2 │     right │     25.0 │   24.8 │   25.2 │       [25.0, -44.0, 16.0] │  25.0 │          0.0 % │
-│    10 │  M frontface │     front │ M righthole1 │     right │     16.0 │   15.8 │   16.2 │      [16.0, -41.0, -15.0] │  16.0 │          0.0 % │
-│    11 │ M righthole1 │     right │  M fronthole │     front │     15.0 │   14.8 │   15.2 │       [-16.0, 41.0, 15.0] │  15.0 │          0.0 % │
-│    12 │  M fronthole │     front │ M righthole2 │     right │     16.0 │   15.8 │   16.2 │       [25.0, -44.0, 16.0] │  16.0 │          0.0 % │
-│    13 │  M frontface │     front │  R backface1 │      back │     85.0 │   84.6 │   85.4 │ [85.0, -14.2404, -13.564] │  85.0 │         -0.0 % │
-│    14 │  M frontface │     front │  R backface2 │      back │     85.0 │   84.6 │   85.4 │  [85.0, 13.7596, -13.564] │  85.0 │         -0.0 % │
-│    15 │ M righthole3 │     right │  M fronthole │     front │      0.0 │   -0.2 │    0.2 │        [-60.0, 38.0, 0.0] │   0.0 │          0.0 % │
-└───────┴──────────────┴───────────┴──────────────┴───────────┴──────────┴────────┴────────┴───────────────────────────┴───────┴────────────────┘
+┌───────┬──────────────┬───────────┬──────────────┬───────────┬──────────┬────────┬────────┬────────────────────────────┬───────┬────────────────┐
+│ Tol # │     feature1 │ partzero1 │     feature2 │ partzero2 │ nominald │ lowerd │ upperd │                   distance │ reald │ tolerancefield │
+├───────┼──────────────┼───────────┼──────────────┼───────────┼──────────┼────────┼────────┼────────────────────────────┼───────┼────────────────┤
+│     1 │ M rightface1 │     right │  M fronthole │     front │     41.0 │   40.7 │   41.3 │        [-16.0, 41.0, 15.0] │  41.0 │          0.0 % │
+│     2 │  M backhole1 │      back │  M fronthole │     front │     14.0 │   13.8 │   14.2 │       [-84.25, 14.0, 14.0] │  14.0 │         -0.0 % │
+│     3 │  M fronthole │     front │  M backhole2 │      back │     14.0 │   13.8 │   14.2 │       [84.25, 14.0, -14.0] │  14.0 │          0.0 % │
+│     4 │  M backhole1 │      back │  M fronthole │     front │     14.0 │   13.8 │   14.2 │       [-84.25, 14.0, 14.0] │  14.0 │          0.0 % │
+│     5 │  M backhole2 │      back │  M fronthole │     front │     14.0 │   13.8 │   14.2 │      [-84.25, -14.0, 14.0] │  14.0 │          0.0 % │
+│     6 │ M rightface3 │     right │  M fronthole │     front │     38.0 │   37.7 │   38.3 │         [-60.0, 38.0, 0.0] │  38.0 │          0.0 % │
+│     7 │ M rightface2 │     right │  M fronthole │     front │     44.0 │   43.7 │   44.3 │       [-25.0, 44.0, -16.0] │  44.0 │          0.0 % │
+│     8 │  M frontface │     front │ M righthole3 │     right │     60.0 │   59.7 │   60.3 │         [60.0, -38.0, 0.0] │  60.0 │          0.0 % │
+│     9 │  M frontface │     front │ M righthole2 │     right │     25.0 │   24.8 │   25.2 │        [25.0, -44.0, 16.0] │  25.0 │          0.0 % │
+│    10 │  M frontface │     front │ M righthole1 │     right │     16.0 │   15.8 │   16.2 │       [16.0, -41.0, -15.0] │  16.0 │          0.0 % │
+│    11 │ M righthole1 │     right │  M fronthole │     front │     15.0 │   14.8 │   15.2 │        [-16.0, 41.0, 15.0] │  15.0 │          0.0 % │
+│    12 │  M fronthole │     front │ M righthole2 │     right │     16.0 │   15.8 │   16.2 │        [25.0, -44.0, 16.0] │  16.0 │          0.0 % │
+│    13 │  M frontface │     front │  R backface1 │      back │     85.0 │   84.6 │   85.4 │ [85.0, -14.2442, -14.0114] │  85.0 │         -0.0 % │
+│    14 │  M frontface │     front │  R backface2 │      back │     85.0 │   84.6 │   85.4 │  [85.0, 13.7558, -14.0114] │  85.0 │         -0.0 % │
+│    15 │ M righthole3 │     right │  M fronthole │     front │      0.0 │   -0.2 │    0.2 │         [-60.0, 38.0, 0.0] │   0.0 │          0.0 % │
+└───────┴──────────────┴───────────┴──────────────┴───────────┴──────────┴────────┴────────┴────────────────────────────┴───────┴────────────────┘
 ```
 
 ## Visualizing the result
