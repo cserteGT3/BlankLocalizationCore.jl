@@ -3,7 +3,7 @@
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://cserteGT3.github.io/BlankLocalizationCore.jl/stable/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://cserteGT3.github.io/BlankLocalizationCore.jl/dev/)
 [![Build Status](https://github.com/cserteGT3/BlankLocalizationCore.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/cserteGT3/BlankLocalizationCore.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15489856.svg)](https://doi.org/10.5281/zenodo.15489856)
+[![DOI](https://proceedings.juliacon.org/papers/10.21105/jcon.00182/status.svg)](https://doi.org/10.21105/jcon.00182)
 
 ## Project description
 
